@@ -30,10 +30,10 @@
             <hr class="sidebar-divider"> 
             
             <!-- Nav Item - Dashboard -->
-            <li class="nav-item <?= uri_string()=='zimnat-all-play'?'active':'' ?>">
-                <a class="nav-link" href="zimnat-all-play">
-                    <i class="fas fa-gamepad"></i>
-                    <span>All Plays</span></a>
+            <li class="nav-item <?= uri_string()=='standing-approvals'?'active':'' ?>">
+                <a class="nav-link" href="standing-approvals">
+                    <i class="fas fa-file-archive"></i>
+                    <span>Standing Approvals</span></a>
             </li>
 
         </ul>

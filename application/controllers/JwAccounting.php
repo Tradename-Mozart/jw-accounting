@@ -96,6 +96,8 @@ class JwAccounting extends MY_Controller {
 	public function logout()
     {
         unset($_SESSION['user']);
+		unset($_SESSION['default_currency']);
+		unset($_SESSION['currencies']);
         redirect('JwAccounting');
     }
 	
@@ -134,9 +136,17 @@ class JwAccounting extends MY_Controller {
 		$data['province_state'] = $Congre_details->province_state;
 		$data['sequenceno'] = $period_details->sequenceno;
 		$data['tc_details'] = $tc_details;
+
+		if(!isset($_SESSION['default_currency']))
+		{
+			$_SESSION['currencies'] = $currency_details;
+			$_SESSION['default_currency'] = $_SESSION['currencies'][0];
+		}
+
 		$data['currency_details'] = $currency_details;
 		$data['account_details'] = $account_details;
 		$data['TO62_Finalizing'] = $TO62_Finalizing;
+
 
 		foreach($TO62_Finalizing as $TO62each)
 		{
@@ -173,14 +183,19 @@ class JwAccounting extends MY_Controller {
 		}
 	}
 
-	public function patient_registration_form(){
+	public function defaultingCurrency($currencyID){
 	  
-	    $head = array();
-        $data = array();
-        $head['title'] = lang('user_register');
-        $head['description'] = lang('user_register');
-        $head['keywords'] = str_replace(" ", ",", $head['title']);
-        $this->render('signup', $head, $data);
+	    $_SESSION['default_currency'] = $_SESSION['currencies'][0];
+
+		foreach($_SESSION['currencies'] as $eachCurrency)
+		{
+			if($eachCurrency->currency_id == $currencyID)
+			{
+				$_SESSION['default_currency'] = $eachCurrency;
+			}
+		}
+
+		redirect('JwAccounting');
 		
 	  }
 	
