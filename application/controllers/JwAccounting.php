@@ -116,16 +116,19 @@ class JwAccounting extends MY_Controller {
 																, '*');
 		
 		$tc_details = $this->Public_Model->get_data_all('tbl_transaction_code', " type <> 'IO' ", null, null
-																, '*');
-		
-		$currency_details = $this->Public_Model->get_data_all('tblcurrency', " 1 = 1 ", null, null
-																, '*');			
+																, '*');		
 																
 		$account_details = $this->Public_Model->get_data_all('tbl_account', " 1 = 1 ", null, null
+																, '*');
+		
+		
+		$currency_details = $this->Public_Model->get_data_all('tblcurrency', " 1 = 1 "
+																, null, null
 																, '*');	
-
-		$TO62_Finalizing = $this->Public_Model->get_data_all('vw_currency_valid_for_to62', " 1 = 1 ", null, null
-																, '*');	
+		
+		$vw_to_62 = $this->Public_Model->get_data_all('vw_to_62', " currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1).
+															   " AND period_status = 'Open'  ", null, null
+																, '*');
 		
 		
 		
@@ -144,18 +147,8 @@ class JwAccounting extends MY_Controller {
 		}
 
 		$data['currency_details'] = $currency_details;
-		$data['account_details'] = $account_details;
-		$data['TO62_Finalizing'] = $TO62_Finalizing;
-
-
-		foreach($TO62_Finalizing as $TO62each)
-		{
-			$TO62_Details = $this->Public_Model->get_data_all('vw_to_62', " currency_id = ".$TO62each->currency_id.
-															   " AND period_status = 'Open'  ", null, null
-																, '*');
-			
-			$vw_to_62['TO62_DET_'.$TO62each->currency] = $TO62_Details;
-		}
+		$data['account_details'] = $account_details;		
+		$data['vw_to_62'] = $vw_to_62;
 
 		if($this->session->flashdata('navPillSelect'))
 		{
@@ -206,8 +199,6 @@ class JwAccounting extends MY_Controller {
 		 $this->form_validation->set_rules('amount', 'Amount Of Transanction', 'required');
 		 $this->form_validation->set_rules('tc', 'Transanction Type'
 		 									, 'trim|required|callback_selection_check');
-		 $this->form_validation->set_rules('currency', 'Currency Type'
-		 									, 'trim|required|callback_selection_check');
 
 		 $this->form_validation->set_rules('descrip', 'Description Of Transanction', 'required');
 		
@@ -236,7 +227,7 @@ class JwAccounting extends MY_Controller {
             'description' => $this->input->post('descrip'), 
             'transaction_code_id' => $this->input->post('tc'), 
             'amount' => $this->input->post('amount'), 
-            'currency_id' => $this->input->post('currency'), 
+            'currency_id' => $_SESSION['default_currency']->currency_id, 
             'account_id' => $this->input->post('account'), 
             'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time()),
 			'period_id' => $period_details->tbl_period_id
@@ -262,20 +253,16 @@ class JwAccounting extends MY_Controller {
 
 		$TO62_TransType = $this->Public_Model->get_data_all('tbl_to_62_trans_type', " 1 = 1 ", null, null
 																, '*');
-		
-		$to_62_reference = $this->Public_Model->get_data_record('tbl_to_62_reference', " period_id = ".$period_details->tbl_period_id
-																." AND currency_id = ".$this->input->post('currID')
-																, null, null, '*');
 
-		$this->form_validation->set_rules('transdate'.$this->input->post('currName'), 'Date Of Transanction!'
+		$this->form_validation->set_rules('transdate', 'Date Of Transanction!'
 											, 'trim|required|callback_transdate_check');
-		$this->form_validation->set_rules('transMethod'.$this->input->post('currName'), 'Transanction Method'
+		$this->form_validation->set_rules('transMethod', 'Transanction Method'
 											, 'trim|required|callback_selection_check');
 		//$this->form_validation->set_rules('refno', 'Refference Number', 'required');
 
 		foreach($TO62_TransType as $TO62_Each)
 		{
-			$this->form_validation->set_rules('input'.$TO62_Each->tbl_to_62_trans_type_id.$this->input->post('currName'), 'Amount Of '.$TO62_Each->description, 'required');
+			$this->form_validation->set_rules('input'.$TO62_Each->tbl_to_62_trans_type_id, 'Amount Of '.$TO62_Each->description, 'required');
 		}
 		
 		
@@ -284,8 +271,7 @@ class JwAccounting extends MY_Controller {
 	   //die('failed');
 	   $this->session->set_flashdata('userError', 'Posting Error');
 	   $this->session->set_flashdata('navPillSelect', 'process-TO62');
-	   $this->session->set_flashdata('TO-62'.$this->input->post('currName'), 'active');
-	   $this->session->set_flashdata('errorTO-62-Currency', $this->input->post('currName'));
+	   $this->session->set_flashdata('errorTO-62-Currency', 'Postng Error');
 	   $this->allowAccess();
    }
    

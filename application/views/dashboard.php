@@ -123,15 +123,10 @@
                     Capture Transanction
                     </a>
                     </li>
-                    <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <?php echo ($navPillSelect == 'process-TO62'?"active":""); ?>" data-toggle="dropdown" href="#">Process TO-62</a>
-                    <div class="dropdown-menu">
-                    <?php foreach($TO62_Finalizing AS $TO62_Finalizing_each) { ?>
-                        <a class="dropdown-item <?php echo ($this->session->flashdata('TO-62'.$TO62_Finalizing_each->currency)?"active":""); ?>" data-toggle="tab" href="#TO-62<?= $TO62_Finalizing_each->currency ?>">
-                        <?= $TO62_Finalizing_each->currency ?>
-                        </a>
-                    <?php } ?>
-                    </div>
+                    <li class="nav-item ">
+                    <a class="nav-link <?php echo ($navPillSelect == 'process-TO62'?"active":""); ?>" data-toggle="tab" href="#process-TO62">
+                    Process TO-62
+                    </a>
                     </li>
                 </ul>                
                 <!-- Nav Tabls-->
@@ -151,15 +146,11 @@
             <div id="capture-trans" class="container tab-pane <?php echo ($navPillSelect == 'capture-trans'?"active":"fade"); ?>"><br>
             <?php $this->load->view('capture-trans'); ?>
             </div>
-            <?php foreach($TO62_Finalizing AS $TO62_Finalizing_each) { 
-                  $dataForTO62['to_62Det'] = $vw_to_62['TO62_DET_'.$TO62_Finalizing_each->currency];
-                  $dataForTO62['to_62_currency'] = $TO62_Finalizing_each->currency;
-                  $dataForTO62['to_62_currency_id'] = $TO62_Finalizing_each->currency_id;
+            <div id="process-TO62" class="container tab-pane <?php echo ($navPillSelect == 'process-TO62'?"active":"fade"); ?>"><br>
+            <?php $dataForTO62['to_62Det'] = $vw_to_62;
+                  $this->load->view('to-62', $dataForTO62); 
             ?>
-            <div id="TO-62<?= $TO62_Finalizing_each->currency ?>" class="container tab-pane <?php echo ($this->session->flashdata('TO-62'.$TO62_Finalizing_each->currency)?"active":"fade"); ?>"><br>
-            <?php $this->load->view('to-62', $dataForTO62); ?>
             </div>
-            <?php } ?>
             </div>
             </div>
         </div>
