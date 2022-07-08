@@ -76,17 +76,8 @@
             <div class="row no-gutters align-items-center">
                 <div class="col mr-2">
                     <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                        Cash Box less WW</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                    
-                    <select class="form-control" name='transMethod<?= $to_62_currency ?>' id="<?php echo (form_error('transMethod'.$to_62_currency)?"inputError":""); ?>">
-                                
-                                <option value="0" selected>USD 45</option>
-								<option value="0">ZWL 111</option>  
-                                <option value="0">RAND 234</option>                                                           
-                    </select>
-
-                    </div>
+                    PlaceHolder</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800"> PlaceHolder</div>
                 </div>
                 <div class="col-auto">
                     <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>

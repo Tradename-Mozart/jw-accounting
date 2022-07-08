@@ -73,6 +73,11 @@ class MY_Controller extends CI_Controller {
 	
 	public function loadpage($pagename, $data = NULL){
 		  
+		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'open' 
+																				AND currency_id = ".$_SESSION['default_currency']->currency_id
+																 , null, null, '*');
+		
+		$data['vw_cash_box_snap'] = $vw_cash_box_snap;
 		 
 		 $this->load->view('parts/html_header', $data);
 		 $this->load->view('parts/navigation_side_bar');

@@ -46,7 +46,7 @@
 								<label><?= $to_62Det_each->description ?></label>
 								<input placeholder="0.00" class="form-control" type="text" name="input<?= $to_62Det_each->tbl_to_62_trans_type_id ?>"
                                 value="<?= (set_value('input'.$to_62Det_each->tbl_to_62_trans_type_id)?set_value('input'.$to_62Det_each->tbl_to_62_trans_type_id):$to_62Det_each->amount); ?>"
-                                id="<?php echo (form_error('input'.$to_62Det_each->tbl_to_62_trans_type_id)?"inputError":""); ?>" <?= ($to_62Det_each->tbl_to_62_trans_type_id == 1)? "disabled":"required"?>>
+                                id="<?php echo (form_error('input'.$to_62Det_each->tbl_to_62_trans_type_id)?"inputError":""); ?>" <?= ($to_62Det_each->tbl_to_62_trans_type_id == 1)? "readonly":"required"?>>
 							</div>
                             <?php } ?>
 
