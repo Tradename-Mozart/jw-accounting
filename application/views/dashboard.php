@@ -119,6 +119,11 @@
                     Process TO-62
                     </a>
                     </li>
+                    <li class="nav-item ">
+                    <a class="nav-link <?php echo ($navPillSelect == 'cashBoxStanding'?"active":""); ?>" data-toggle="tab" href="#cashBoxStanding">
+                    Cash Box Standing
+                    </a>
+                    </li>
                 </ul>                
                 <!-- Nav Tabls-->
                 <div class="dropdown no-arrow">
@@ -140,6 +145,11 @@
             <div id="process-TO62" class="container tab-pane <?php echo ($navPillSelect == 'process-TO62'?"active":"fade"); ?>"><br>
             <?php $dataForTO62['to_62Det'] = $vw_to_62;
                   $this->load->view('to-62', $dataForTO62); 
+            ?>
+            </div>
+            <div id="cashBoxStanding" class="container tab-pane <?php echo ($navPillSelect == 'cashBoxStanding'?"active":"fade"); ?>"><br>
+            <?php $dataForCash['cashStand'] = $cashStand;
+                  $this->load->view('cash-box-standing', $dataForCash); 
             ?>
             </div>
             </div>

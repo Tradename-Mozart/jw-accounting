@@ -129,6 +129,10 @@ class JwAccounting extends MY_Controller {
 		$vw_to_62 = $this->Public_Model->get_data_all('vw_to_62', " currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1).
 															   " AND period_status = 'Open'  ", null, null
 																, '*');
+
+		$cashStand = $this->Public_Model->get_data_record('vw_cash_box_standing', " currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1).
+															   " AND status = 'Open'  ", null, null
+																, '*');
 		
 		
 		
@@ -160,6 +164,7 @@ class JwAccounting extends MY_Controller {
 		}
 
 		$data['vw_to_62'] = $vw_to_62;
+		$data['cashStand'] = $cashStand;
 
 		$this->loadpage('dashboard',$data);
 	}
@@ -258,7 +263,7 @@ class JwAccounting extends MY_Controller {
 		 		&& $this->input->post('amount') > $vw_cash_box_snap->amount_in_cash_box_less_ww)
 		 {
 			$this->session->set_flashdata('userError', 'Posting Error');
-			$this->session->set_flashdata('errorDesc', "Expense Amount ".$this->input->post('amount')." Is Greater Than Amount In  Cash Box For Congre Use");
+			$this->session->set_flashdata('errorDesc', "Expense Amount ".$this->input->post('amount')." Is Greater Than Amount In  Cash Box For Congregation Use");
 			$this->session->set_flashdata('navPillSelect', 'capture-trans');
 			$this->allowAccess();
 			return;
@@ -279,10 +284,11 @@ class JwAccounting extends MY_Controller {
 			$this->allowAccess();
 			return;
 		 }
-		 else if($tc_details->type == 'O' && $tc_details->transaction_code != 'E')
+		 else if($tc_details->type == 'O' && $tc_details->transaction_code != 'E'
+		 		 && $this->input->post('amount') > $vw_account_standing_p2p->account_net_amount)
 		 {
 			$this->session->set_flashdata('userError', 'Posting Error');
-			$this->session->set_flashdata('errorDesc', "You Cannot Deposit Into This Account");
+			$this->session->set_flashdata('errorDesc', "Outbound Amount ".$this->input->post('amount')." Is Greater Than Amount In Account");
 			$this->session->set_flashdata('navPillSelect', 'capture-trans');
 			$this->allowAccess();
 			return;
@@ -461,6 +467,48 @@ class JwAccounting extends MY_Controller {
 			}
 		}												
 		
+	}
+
+	public function processCashBoxStanding()
+	{
+		$this->load->library('form_validation');
+		$this->form_validation->set_rules('cash_in_box', 'Amount In Cash Box', 'required');
+
+		if ($this->form_validation->run($this) == FALSE)
+		{
+			//die('failed');
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('navPillSelect', 'cashBoxStanding');
+			$this->session->set_flashdata('error-cash-box-standing', 'cashBoxStanding');
+			$this->allowAccess();
+		}
+		else
+		{
+			$cashStand = $this->Public_Model->get_data_record('vw_cash_box_standing', " currency_id = ".$_SESSION['default_currency']->currency_id.
+															   " AND status = 'Open'  ", null, null
+																, '*');
+
+			$data = array( 
+				'period_id' => $cashStand->tbl_period_id, 
+				'currency_id' => $_SESSION['default_currency']->currency_id, 
+				'cash_in_box' => $this->input->post('cash_in_box'), 
+				'complete_pay_not_recorde' => $this->input->post('comp_pay_no_record'), 
+				'cash_adv_not_clr' => $this->input->post('cash_adv_no_clr'),
+				'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time())
+			 );
+
+			if(isset($cashStand->tbl_closing_details_id))
+			{
+				$this->Update_Model->update($data,"tbl_closing_details_id",$cashStand->tbl_closing_details_id,"tbl_closing_details" );
+			}
+			else
+			{
+				$this->Public_Model->insert($data,'tbl_closing_details');
+			}
+
+			$this->session->set_flashdata('userSuccess', 'Posting Successfull');
+         	redirect('JwAccounting');	
+		}
 	}
 
 	public function transdate_check($str)
