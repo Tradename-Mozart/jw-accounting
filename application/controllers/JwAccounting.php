@@ -276,6 +276,15 @@ class JwAccounting extends MY_Controller {
 			$this->allowAccess();
 			return;
 		 }
+		 else if(($tc_details->transaction_code == 'FRXWO' || $tc_details->transaction_code == 'FRXCO' || $tc_details->transaction_code == 'FRXWI' || $tc_details->transaction_code == 'FRXCI') 
+		 		 && $this->input->post('account')  != 2)
+		 {
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('errorDesc', "You Cannot Exchange Currency In This Account");
+			$this->session->set_flashdata('navPillSelect', 'capture-trans');
+			$this->allowAccess();
+			return;
+		 }
 		 else if($tc_details->transaction_code == 'DI' && ($this->input->post('account')  == 1 || $this->input->post('account')  == 3 ))
 		 {
 			$this->session->set_flashdata('userError', 'Posting Error');

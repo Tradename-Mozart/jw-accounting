@@ -36,5 +36,15 @@
                     <span>Standing Approvals</span></a>
             </li>
 
+             <!-- Divider -->
+             <hr class="sidebar-divider"> 
+            
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item <?= uri_string()=='close-period'?'active':'' ?>">
+                <a class="nav-link" href="close-period">
+                    <i class="fas fa-door-open"></i>
+                    <span>Close Period</span></a>
+            </li>
+
         </ul>
         <!-- End of Sidebar -->

@@ -59,5 +59,9 @@ $route['forgot_access'] = 'JwAccounting/forgot';
 $route['post-transaction'] = 'JwAccounting/capture_Transaction';
 $route['post-to62'] = 'JwAccounting/processTO62';
 $route['switch-currency/(:any)'] = 'JwAccounting/defaultingCurrency/$1';
-$route['standing-approvals'] = 'StandingApprovals';
 $route['post-cash-box-standing'] = 'JwAccounting/processCashBoxStanding';
+
+$route['standing-approvals'] = 'StandingApprovals';
+
+$route['close-period'] = 'ClosingPeriod';
+$route['process-close-period'] = 'ClosingPeriod/processClosePeriod';
