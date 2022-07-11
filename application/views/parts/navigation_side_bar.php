@@ -46,5 +46,15 @@
                     <span>Close Period</span></a>
             </li>
 
+            <!-- Divider -->
+            <hr class="sidebar-divider"> 
+            
+            <!-- Nav Item - Reports -->
+            <li class="nav-item <?= uri_string()=='reports'?'active':'' ?>">
+                <a class="nav-link" href="reports">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Reports</span></a>
+            </li>
+
         </ul>
         <!-- End of Sidebar -->
