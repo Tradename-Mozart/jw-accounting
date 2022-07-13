@@ -67,4 +67,5 @@ $route['close-period'] = 'ClosingPeriod';
 $route['process-close-period'] = 'ClosingPeriod/processClosePeriod';
 
 $route['reports'] = 'ReportsCntrl';
+$route['pdf-report-test'] = 'ReportsCntrl/getReportTest';
 

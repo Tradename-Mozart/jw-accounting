@@ -11,13 +11,7 @@ class Public_model extends CI_Model
 
 	
 	
-	public function checkloginStatus()
-    {
-		if(!isset($_SESSION['user']->is_logged_in))
-		{
-        redirect('easyrwds');
-		}
-    }
+	
 	
 	public function email_check($email)
 	{
@@ -116,8 +110,19 @@ class Public_model extends CI_Model
 		
 		$this->db->where($where);
 		
+		if(!is_array($orderbyid))
+		{
+			//Kept this foe legacy purpose
 		if(!empty($orderbyid))
 		$this->db->order_by($orderbyid, (!empty($orderbytype)) ? $orderbytype :'ASC');
+		}
+		else if(is_array($orderbyid))
+		{
+			foreach($orderbyid as $orderSingle)
+			{
+				$this->db->order_by($orderSingle['field'], $orderSingle['direction']);
+			}
+		}
 		
 		if(!empty($limit_num_rows))
 		  $this->db->limit($limit_num_rows,(!empty($limit_start)) ? $limit_start :0);
@@ -154,5 +159,8 @@ class Public_model extends CI_Model
             return true; 
          } 
       } 
+
+	
+
 
 }

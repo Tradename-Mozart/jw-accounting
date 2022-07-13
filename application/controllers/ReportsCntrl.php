@@ -1,6 +1,11 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+define('ACCESSCHECK', TRUE);
+
+require_once(APPPATH.'libraries/fillpdf/vendor/autoload.php');
+use Classes\GeneratePDF;
+
 class ReportsCntrl extends MY_Controller {
 
 	/**
@@ -20,7 +25,8 @@ class ReportsCntrl extends MY_Controller {
 	 */
 	
 	function __construct() { 
-         parent::__construct(); 
+         parent::__construct();
+		 $this->load->Model('PDFKit_Model'); 
       } 
 	
 	public function index()
@@ -30,80 +36,110 @@ class ReportsCntrl extends MY_Controller {
 			redirect('JwAccounting');
 		}
 
-		$countErrors = 0;
-
-		$vw_error_warning = $this->Public_Model->get_data_all('vw_error_warning', " 1 = 1 ", 'type', null, '*');
-
-		foreach($vw_error_warning as $errorEach)
-		{
-			if(isset($errorEach->type))
-			{
-				if($errorEach->type == 'Error')
-				{
-					$countErrors++;
-				}
-			}
-		}
-
 		$data['title'] = 'Reports';
-		$data['vw_error_warning'] = $vw_error_warning;
-		$data['navPillSelect'] = 'resolvedMonContr';
-		$data['countErrors'] = $countErrors;
 
 		$this->loadpage('reports',$data);
 		
 	}
 
-	public function processClosePeriod()
+	public function getReportTest()
 	{
-		$this->load->library('form_validation');
-		$this->form_validation->set_rules('confirm_det', 'Confirm Closing Of Period', 'trim|required|callback_confirm_check');
+		//echo 'App Path name '.APPPATH;
 
-		if ($this->form_validation->run($this) == FALSE)
-		{
-			//die('failed');
-			$this->session->set_flashdata('userError', 'Posting Error');
-			$this->session->set_flashdata('errorClosingPeriod', 'errorClosingPeriod');
-			$this->index();
-		}
-		else
-		{
-			$vw_account_standing_p2p = $this->Public_Model->get_data_all('vw_account_standing_p2p', " status = 'Open' " 
-																." AND ( account_net_amount > 0 OR ABS(income_amount_curr_mon) + ABS(outbound_amount_curr_mon) > 0 ) ", null, null, '*');
+		//require_once 'vendor/autoload.php';
+
 		
 
-		foreach($vw_account_standing_p2p as $eachClosing)
-		{
-			$data = array( 
-				'period_id' => $eachClosing->tbl_period_id, 
-				'account_id' => $eachClosing->tbl_account_id,  
-				'currency_id' => $eachClosing->currency_id,  
-				'amount_in' => $eachClosing->income_amount_curr_mon, 
-				'amount_out' => $eachClosing->outbound_amount_curr_mon,  
-				'amount_closing' => $eachClosing->account_net_amount,  
-				'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time())
-			 );
+		$data = [
 
-			 $this->Public_Model->insert($data,'tbl_acc_closing_det');
-		}
+			'900_1_Text_C' => '3',
+			'901_1_S26Value' => '9',
+			'902_1_S26Value' => '15',
+			'903_1_S26Value' => '21',
+			'900_2_Text_C' => '27'
+		];
 
-		$this->session->set_flashdata('userSuccess', 'Period Successfully Closed. New Period Opened');
-         redirect('JwAccounting');
 
-		}
-	}
+		$pdf = new GeneratePdf;
+		$response = $pdf->customGenerate($data, APPPATH.'libraries/fillpdf/S-26_CA_Test.pdf', APPPATH.'libraries/fillpdf/completed/');
 
-	public function confirm_check($str)
-	{ 
-
-			if ($str != 's1') 
-			{ $this->form_validation->set_message('confirm_check', "Kindly Confirm Closing Of Period"); 
-				return FALSE; 
-			} 
-			else { return TRUE; 
+		echo $response;
 			}
 
+	public function populatingS26($periodID, $currency_id = NULL)
+	{
+		$sum_rec_in = $sum_rec_out = $sum_prim_in = $sum_prim_out = $sum_seca_in = $sum_seca_out = 0.00;
+		$currFieldS26 = 1;
+
+		$s26CAMapping = $this->PDFKit_Model->s26CAMapping();
+		$s26CASpreadSheetMapping = $this->PDFKit_Model->s26CASpreadSheetMapping();
+
+		$congrDet = $this->Public_Model->get_data_record('tbl_congregation_detail', " 1 = 1 ", null, null, '*');
+		$periodDet = $this->Public_Model->get_data_record('tbl_period', " tbl_period_id =  ".$periodID, null, null, '*, MONTHNAME(startdate) AS month_name');
+		$closeDate = $this->Public_Model->get_data_record('vw_extract_date', " tbl_period_id =  ".$periodID, null, null, '*');
+
+		$sortby[] =  array('field'=>'trans_day'
+							 , 'direction' => "asc");
+		
+		$sortby[] =  array('field'=>'createdate'
+							 , 'direction' => "asc");
+
+		$vw_s26_data = $this->Public_Model->get_data_all('vw_s26_data', " currency_id = ".$_SESSION['default_currency']->currency_id
+															   ." AND period_id = {$periodID}", $sortby, null
+																, '*');
+		
+		$data[$s26CAMapping['3']] = $congrDet->congregation_name;
+		$data[$s26CAMapping['27']] = $congrDet->city;
+		$data[$s26CAMapping['51']] = $congrDet->province_state;
+		$data[$s26CAMapping['75']] = $congrDet->month_name;
+		$data[$s26CAMapping['99']] = $congrDet->year;
+
+		foreach($vw_s26_data as $vw_s26_each)
+		{
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['D'.$currFieldS26]]] = $vw_s26_each->trans_day;
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['DSCR'.$currFieldS26]]] = $vw_s26_each->description;
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['TC'.$currFieldS26]]] = $vw_s26_each->transaction_code;
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['RCI'.$currFieldS26]]] = $vw_s26_each->rec_in;
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['RCO'.$currFieldS26]]] = $vw_s26_each->rec_out;
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['PI'.$currFieldS26]]] = $vw_s26_each->prim_in;
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['PO'.$currFieldS26]]] = $vw_s26_each->prim_out;
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['SAI'.$currFieldS26]]] = $vw_s26_each->seca_in;
+			$data[$s26CAMapping[$s26CASpreadSheetMapping['SAO'.$currFieldS26]]] = $vw_s26_each->seca_out;
+
+			if(isset($vw_s26_each->rec_in))
+			{
+				$sum_rec_in += $vw_s26_each->rec_in;
+			}
+			if(isset($vw_s26_each->rec_out))
+			{
+				$sum_rec_out += $vw_s26_each->rec_out;
+			}
+			if(isset($vw_s26_each->prim_in))
+			{
+				$sum_prim_in += $vw_s26_each->prim_in;
+			}
+			if(isset($vw_s26_each->prim_out))
+			{
+				$sum_prim_out +=$vw_s26_each->prim_out;
+			}
+			if(isset($vw_s26_each->seca_in))
+			{
+				$sum_seca_in += $vw_s26_each->seca_in;
+			}
+			if(isset($vw_s26_each->seca_out))
+			{
+				$sum_seca_out += $vw_s26_each->seca_out;
+			}
+		}
+
+		$data[$s26CAMapping['1251']] = $sum_rec_in;
+		$data[$s26CAMapping['2523']] = $sum_rec_out;
+		$data[$s26CAMapping['1257']] = $sum_prim_in;
+		$data[$s26CAMapping['2529']] = $sum_prim_out;
+		$data[$s26CAMapping['1263']] = $sum_seca_in;
+		$data[$s26CAMapping['2535']] = $sum_seca_out;
+
+		
 	}
-	
 	
 }

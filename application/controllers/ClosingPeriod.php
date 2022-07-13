@@ -68,6 +68,18 @@ class ClosingPeriod extends MY_Controller {
 		}
 		else
 		{
+			$periodDet = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null, '*');
+
+			$periodNext = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
+															    , 'DATE_ADD(startdate, INTERVAL 1 month ) AS startdate,
+																DATE_ADD(enddate, INTERVAL 1 MONTH ) AS enddate,
+																CONCAT(YEAR(DATE_ADD(startdate, INTERVAL 1 MONTH )),LPAD(MONTH(DATE_ADD(startdate, INTERVAL 1 MONTH )),2,0)) AS sequenceno,
+																YEAR(DATE_ADD(startdate, INTERVAL 1 month )) AS  year,
+																MONTH(DATE_ADD(startdate, INTERVAL 1 month )) AS  mon,
+																tbl_period_id AS previouse_period_id,
+																status'
+															);
+			
 			$vw_account_standing_p2p = $this->Public_Model->get_data_all('vw_account_standing_p2p', " status = 'Open' " 
 																." AND ( account_net_amount > 0 OR ABS(income_amount_curr_mon) + ABS(outbound_amount_curr_mon) > 0 ) ", null, null, '*');
 		
@@ -85,7 +97,32 @@ class ClosingPeriod extends MY_Controller {
 			 );
 
 			 $this->Public_Model->insert($data,'tbl_acc_closing_det');
+
 		}
+
+		
+		// close period
+
+		$data = array( 
+		'status' => 'Closed'
+		);
+
+		$this->Public_Model->update($data,"tbl_period_id",$periodDet->tbl_period_id,"tbl_period" );
+
+		// Open new period
+
+		$data = array( 
+			'startdate' => $periodNext->startdate, 
+			'enddate' => $periodNext->enddate,  
+			'sequenceno' => $periodNext->sequenceno,  
+			'year' => $periodNext->year, 
+			'mon' => $periodNext->mon,  
+			'previouse_period_id' => $periodNext->previouse_period_id,
+			'status' => $periodNext->status, 
+			'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time())
+		 );
+
+		$this->Public_Model->insert($data,'tbl_period');
 
 		$this->session->set_flashdata('userSuccess', 'Period Successfully Closed. New Period Opened');
          redirect('JwAccounting');

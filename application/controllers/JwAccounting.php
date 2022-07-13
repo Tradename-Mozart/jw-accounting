@@ -115,7 +115,7 @@ class JwAccounting extends MY_Controller {
 		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
 																, '*');
 		
-		$tc_details = $this->Public_Model->get_data_all('tbl_transaction_code', " type <> 'IO' ", null, null
+		$tc_details = $this->Public_Model->get_data_all('tbl_transaction_code', " type <> 'IO' and tbl_transaction_code_id <> 8 ", null, null
 																, '*');		
 																
 		$account_details = $this->Public_Model->get_data_all('tbl_account', " 1 = 1 ", null, null
@@ -224,6 +224,12 @@ class JwAccounting extends MY_Controller {
 	
 	else
 	{
+		$size_running_analysis_acc = 0;
+		$acc_runningNet[1] = 0.00;
+		$acc_runningNet[2] = 0.00;
+		$acc_runningNet[3] = 0.00;
+		$amountForCongreUseThen = 0.00;
+
 		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
 																, '*');
 
@@ -238,7 +244,26 @@ class JwAccounting extends MY_Controller {
 																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
 																		." AND tbl_account_id = ".$this->input->post('account')
 																 		, null, null, '*');
+		$sortby[] =  array('field'=>'trans_day'
+							 , 'direction' => "asc");
 		
+		$sortby[] =  array('field'=>'createdate'
+							 , 'direction' => "asc");
+
+		$vw_running_analysis_acc = $this->Public_Model->get_data_all('vw_running_analysis_acc', " status = 'open' 
+																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
+																	 ." AND trans_day <= DAY('".$this->input->post('transdate')."')"
+																 		, $sortby, null, '*');
+		
+										
+		if(isset($vw_running_analysis_acc[0]->trans_day))
+		{
+			$size_running_analysis_acc = sizeof($vw_running_analysis_acc);
+			$amountForCongreUseThen = $vw_running_analysis_acc[$size_running_analysis_acc-1]->running_amnt_for_congr_expense;
+			$acc_runningNet[1] = $vw_running_analysis_acc[($size_running_analysis_acc-1)]->running_rec_net;
+			$acc_runningNet[2] = $vw_running_analysis_acc[($size_running_analysis_acc-1)]->running_prim_net;
+		}
+
 		 $data = array( 
             'transanction_date' => $this->input->post('transdate'), 
             'description' => $this->input->post('descrip'), 
@@ -260,7 +285,8 @@ class JwAccounting extends MY_Controller {
 			return;
 		 }
 		 else if($tc_details->transaction_code == 'E' && $this->input->post('account') == 2
-		 		&& $this->input->post('amount') > $vw_cash_box_snap->amount_in_cash_box_less_ww)
+		 		&& $this->input->post('amount') > $vw_cash_box_snap->amount_in_cash_box_less_ww
+				&& $this->input->post('amount') > $amountForCongreUseThen)
 		 {
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "Expense Amount ".$this->input->post('amount')." Is Greater Than Amount In  Cash Box For Congregation Use");
@@ -294,7 +320,8 @@ class JwAccounting extends MY_Controller {
 			return;
 		 }
 		 else if($tc_details->type == 'O' && $tc_details->transaction_code != 'E'
-		 		 && $this->input->post('amount') > $vw_account_standing_p2p->account_net_amount)
+		 		 && $this->input->post('amount') > $vw_account_standing_p2p->account_net_amount
+				 && $this->input->post('amount') > $acc_runningNet[$this->input->post('account')])
 		 {
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "Outbound Amount ".$this->input->post('amount')." Is Greater Than Amount In Account");
@@ -307,6 +334,22 @@ class JwAccounting extends MY_Controller {
 		 if($this->input->post('amount') > 0)
 		 {
 		 	$this->post_ID = $this->Public_Model->insert_and_return_key($data,'tbl_ledger_s_26');
+
+			if($tc_details->transaction_code == 'DO')
+			{
+				$data = array( 
+					'transanction_date' => $this->input->post('transdate'), 
+					'description' => $this->input->post('descrip'), 
+					'transaction_code_id' => 8, 
+					'amount' => $this->input->post('amount'), 
+					'currency_id' => $_SESSION['default_currency']->currency_id, 
+					'account_id' => 2, 
+					'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time()),
+					'period_id' => $period_details->tbl_period_id
+				 );
+
+				 $this->Public_Model->insert($data,'tbl_ledger_s_26');
+			}
 		 }
 		 						
 		 $this->session->set_flashdata('userSuccess', 'Posting Successfull');
@@ -398,7 +441,7 @@ class JwAccounting extends MY_Controller {
 			 
 			 if(isset($ledegerS26->tbl_ledger_S_26_id) && $this->input->post('refno') != '')
 			 {
-				$this->Update_Model->update($data,"tbl_ledger_S_26_id",$ledegerS26->tbl_ledger_S_26_id,"tbl_ledger_s_26" );
+				$this->Public_Model->update($data,"tbl_ledger_S_26_id",$ledegerS26->tbl_ledger_S_26_id,"tbl_ledger_s_26" );
 			 }
 			 else if($amount > 0 && $this->input->post('refno') != '')
 			 {
@@ -438,7 +481,7 @@ class JwAccounting extends MY_Controller {
 
 		if(isset($to_62_reference_details->tbl_to_62_reference_id))
 		{
-			$this->Update_Model->update($data,"tbl_to_62_reference_id",$to_62_reference_details->tbl_to_62_reference_id,"tbl_to_62_reference" );
+			$this->Public_Model->update($data,"tbl_to_62_reference_id",$to_62_reference_details->tbl_to_62_reference_id,"tbl_to_62_reference" );
 		}
 		else
 		{
@@ -468,7 +511,7 @@ class JwAccounting extends MY_Controller {
 
 			if(isset($vw_to_62Each->to_62_trans_type_id))
 			{
-				$this->Update_Model->update($data,"tbl_record_funds_trans_to_62_id",$vw_to_62Each->tbl_record_funds_trans_to_62_id,"tbl_record_funds_trans_to_62" );
+				$this->Public_Model->update($data,"tbl_record_funds_trans_to_62_id",$vw_to_62Each->tbl_record_funds_trans_to_62_id,"tbl_record_funds_trans_to_62" );
 			}
 			else if($postData->post('input'.$vw_to_62Each->tbl_to_62_trans_type_id) > 0)
 			{
@@ -508,7 +551,7 @@ class JwAccounting extends MY_Controller {
 
 			if(isset($cashStand->tbl_closing_details_id))
 			{
-				$this->Update_Model->update($data,"tbl_closing_details_id",$cashStand->tbl_closing_details_id,"tbl_closing_details" );
+				$this->Public_Model->update($data,"tbl_closing_details_id",$cashStand->tbl_closing_details_id,"tbl_closing_details" );
 			}
 			else
 			{
