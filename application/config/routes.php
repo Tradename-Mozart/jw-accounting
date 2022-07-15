@@ -58,3 +58,17 @@ $route['forgot_access'] = 'JwAccounting/forgot';
 
 $route['post-transaction'] = 'JwAccounting/capture_Transaction';
 $route['post-to62'] = 'JwAccounting/processTO62';
+$route['switch-currency/(:any)'] = 'JwAccounting/defaultingCurrency/$1';
+$route['post-cash-box-standing'] = 'JwAccounting/processCashBoxStanding';
+
+$route['standing-approvals'] = 'StandingApprovals';
+
+$route['close-period'] = 'ClosingPeriod';
+$route['process-close-period'] = 'ClosingPeriod/processClosePeriod';
+
+$route['reports'] = 'ReportsCntrl';
+$route['pdf-report-test'] = 'ReportsCntrl/getReportTest';
+$route['generate-report-s26/(:any)'] = 'ReportsCntrl/populatingS26/$1';
+$route['generate-report-to62/(:any)'] = 'ReportsCntrl/populatingTO62/$1';
+$route['generate-report-s30/(:any)'] = 'ReportsCntrl/populatingS30/$1';
+

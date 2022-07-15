@@ -16,40 +16,33 @@ require_once('webroot.php');
 	 * you want to insert a non-database field (for example a counter or static image)
 	 */
 	 
-	$campaignListID = $_GET['campaignListID'];
-	 
-	$aColumns = array(
-		'current_dense_rank'
-		, 'email_phone_hidden'
-		, 'contact'    
-		,'running_score'
-	  	, 'highest_score'
-  	 );
+	
+	
+	$period_id = $_GET['period_id'];
+	$currency_id = $_GET['currency_id'];
+	
+	
 
-	$columnsToQuery = array(
-		'current_dense_rank'
-		, 'email_phone_hidden'
-		, 'contact'  
-		, 'running_score'
-	  	, 'CAST(highest_score AS DECIMAL) AS highest_score' 
-  	  );
+  $aColumns = array(
+	'sequenceno',
+    'tbl_period_id',
+    'tbl_period_id',
+    'tbl_period_id' 
+  );
     
    /* Indexed column (used for fast and accurate table cardinality) */
-   $sIndexColumn = "current_dense_rank";
-
-   //$sIndexColumn = "tbl_user_id";
+   $sIndexColumn = "tbl_period_id";
  
    /* DB table to use */
-   $sTable = "temp_leader_board_zimnat_players_per_camp tmp_lbzp";
-
-   //$sTable = "tbl_user";
+   $sTable = "tbl_period AS tp";
  
    $sJoin = "";
    $sWhere = "";
    $sOrder = "";
  
    // Joins
-   // $sJoin = 'LEFT JOIN vw_cartitemsinordersum on order_id_sum = order_ear_id';
+   /*$sJoin = 'LEFT JOIN procedure_fee pf ON pf.proc_id = pd.id 
+   			 LEFT JOIN procedure_category pc ON pc.cat_id = pd.pro_category_id';*/
     
    // get the database credentials from the configfile
    
@@ -72,10 +65,6 @@ require_once('webroot.php');
 	
 	
 	$gaSql['link'] = select_db($gaSql);
-
-	$sQuery = " CALL sp_leader_board_zimnat_sldgm_per_camp ({$campaignListID}, NULL);";
-
-	query($sQuery , $gaSql);
 	
 	/* 
 	 * Paging
@@ -93,32 +82,20 @@ require_once('webroot.php');
 	 */
 	if ( isset( $_GET['iSortCol_0'] ) )
 	{
-		$sOrder = "ORDER BY  ";
+		if($sOrder == "")
+		{
+			$sOrder = "ORDER BY  ";
+		}
+		else
+		{
+			$sOrder .= ", ";
+		}
 		for ( $i=0 ; $i<intval( $_GET['iSortingCols'] ) ; $i++ )
 		{
 			if ( $_GET[ 'bSortable_'.intval($_GET['iSortCol_'.$i]) ] == "true" )
 			{
-				//echo 'to sort '.$aColumns[ intval( $_GET['iSortCol_'.$i] ) ].'  |  '.mysqli_real_escape_string( $gaSql['link'], $_GET['sSortDir_'.$i] ).'<br/>';
-				//handle nulls here
-				if( $aColumns[ intval( $_GET['iSortCol_'.$i] ) ] == 'running_score'
-					|| $aColumns[ intval( $_GET['iSortCol_'.$i] ) ] == 'highest_score'
-					|| $aColumns[ intval( $_GET['iSortCol_'.$i] ) ] == 'current_dense_rank')
-				{
-					
-					if(mysqli_real_escape_string( $gaSql['link'], $_GET['sSortDir_'.$i] ) == 'asc')
-					{
-						$sOrder .= "-".$aColumns[ intval( $_GET['iSortCol_'.$i] ) ]." desc, ";
-					}
-					else if(mysqli_real_escape_string( $gaSql['link'], $_GET['sSortDir_'.$i] ) == 'desc')
-					{
-						$sOrder .= "-".$aColumns[ intval( $_GET['iSortCol_'.$i] ) ]." asc, ";
-					}
-				}
-				else
-				{
-					$sOrder .= $aColumns[ intval( $_GET['iSortCol_'.$i] ) ]."
+				$sOrder .= $aColumns[ intval( $_GET['iSortCol_'.$i] ) ]."
 				 	".mysqli_real_escape_string( $gaSql['link'], $_GET['sSortDir_'.$i] ) .", ";
-				}
 			}
 		}
 		
@@ -171,24 +148,35 @@ require_once('webroot.php');
 	}
 	
 	
-	
-	if($sOrder == "")
+	/*if($sWhere == "")
 	{
-		$sOrder = 'ORDER BY -current_dense_rank desc';
+		$sWhere .= "WHERE  period_id = {$period_id} AND currency_id = {$currency_id}";
 	}
+	else
+	{
+		$sWhere .= " And (period_id = {$period_id}) AND currency_id = {$currency_id}";
+	}*/
 	
 	/*
 	 * SQL queries
 	 * Get data to display
 	 */
 
+
+	/*if($sOrder == "")
+	{
+		$sOrder = "Order By trans_day ASC, createdate ASC";
+		
+	}*/
+
 	$sQuery = "
-		SELECT DISTINCT SQL_CALC_FOUND_ROWS ".str_replace(" , ", " ", implode(", ", $columnsToQuery))."
+		SELECT DISTINCT SQL_CALC_FOUND_ROWS ".str_replace(" , ", " ", implode(", ", $aColumns))."
 		FROM   $sTable
 		$sJoin 
 		$sWhere
 		$sOrder
-		$sLimit;";
+		$sLimit
+	";
 	
 	//echo $sQuery."<br/><br/>";
 	
@@ -243,14 +231,21 @@ require_once('webroot.php');
 			}
 		}
 		
-			// foreach($row AS $r => $a)
-			// {
-			// 	if($r == '1')
-			// 	{
-			// 		$row[1] = "<img class='product-image' src='{$WEB_ROOT}attachments/shop_images/" .$row[1]."' alt=''>";
-			// 	}
-			// }
+			foreach($row AS $r => $a)
+			{				
+				if($r == 0)
+				{	
+				$row[1] = '<a onClick="generateReport('.$row[1].', \'s26\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+				class="fas fa-download fa-sm text-white-50"></i> Generate S-26</a>';
 
+				$row[2] = '<a onClick="generateReport('.$row[2].', \'to62\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+				class="fas fa-download fa-sm text-white-50"></i> Generate TO-62</a>';
+
+				$row[3] = '<a onClick="generateReport('.$row[3].', \'s30\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+				class="fas fa-download fa-sm text-white-50"></i> Generate S-30</a>';
+				}
+							
+			}
 		$output['aaData'][] = $row;
 		
 	}

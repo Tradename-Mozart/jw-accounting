@@ -2,7 +2,7 @@
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
             <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="easyrwds">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="login">
                 <div class="sidebar-brand-icon rotate-n-15">
                    <?php echo img(array(
                                                         'src'   => 'static/img/green-chart-arrow.png',
@@ -30,10 +30,30 @@
             <hr class="sidebar-divider"> 
             
             <!-- Nav Item - Dashboard -->
-            <li class="nav-item <?= uri_string()=='zimnat-all-play'?'active':'' ?>">
-                <a class="nav-link" href="zimnat-all-play">
-                    <i class="fas fa-gamepad"></i>
-                    <span>All Plays</span></a>
+            <li class="nav-item <?= uri_string()=='standing-approvals'?'active':'' ?>">
+                <a class="nav-link" href="standing-approvals">
+                    <i class="fas fa-file-archive"></i>
+                    <span>Standing Approvals</span></a>
+            </li>
+
+             <!-- Divider -->
+             <hr class="sidebar-divider"> 
+            
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item <?= uri_string()=='close-period'?'active':'' ?>">
+                <a class="nav-link" href="close-period">
+                    <i class="fas fa-door-open"></i>
+                    <span>Close Period</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider"> 
+            
+            <!-- Nav Item - Reports -->
+            <li class="nav-item <?= uri_string()=='reports'?'active':'' ?>">
+                <a class="nav-link" href="reports">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Reports</span></a>
             </li>
 
         </ul>

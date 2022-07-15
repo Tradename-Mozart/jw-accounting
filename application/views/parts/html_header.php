@@ -41,15 +41,13 @@
    </style>
 	
 	<script type="text/javascript">
-	var ci_base_url_snl = "<?= base_url() ?>static/phsgame/snl/";
 	var ci_base_url = "<?= base_url() ?>";
     var ci_hostName_url = "<?= (substr($_SERVER['HTTP_HOST'], 0, 5) == 'local' || substr($_SERVER['HTTP_HOST'], -4) == '8080')?'http': 'https' ?>://<?= $_SERVER['HTTP_HOST']  ?>/";
-    //var hoster_dttable = "<?= (substr($_SERVER['HTTP_HOST'], 0, 5) == 'local' || substr($_SERVER['HTTP_HOST'], -4) == '8080')?'easyrwds': 'https' ?>";
-    var datatable_url = "<?= (substr($_SERVER['HTTP_HOST'], 0, 5) == 'local' || substr($_SERVER['HTTP_HOST'], -4) == '8080')?'http': 'https' ?>://<?= $_SERVER['HTTP_HOST']  ?>/easyrwds";
-    <?php if(isset($latestID)) {?>
-    var campaignListID = <?=$latestID ?>;
-    var latestEndDte = '<?=$latestEndDate ?>';
-    <?php } ?>
+    var datatable_url = "<?= (substr($_SERVER['HTTP_HOST'], 0, 5) == 'local' || substr($_SERVER['HTTP_HOST'], -4) == '8080')?'http': 'https' ?>://<?= $_SERVER['HTTP_HOST']  ?>/jw-accounting";
+    var period_id = <?=$tbl_period_id ?>;
+    var sequenceno = '<?=$sequenceno ?>';
+    var currency_id = <?=$_SESSION['default_currency']->currency_id ?>;
+    var reportURL = "<?= base_url() ?>static/pdf_extract/";
 
     
     </script>

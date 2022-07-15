@@ -96,6 +96,8 @@ class JwAccounting extends MY_Controller {
 	public function logout()
     {
         unset($_SESSION['user']);
+		unset($_SESSION['default_currency']);
+		unset($_SESSION['currencies']);
         redirect('JwAccounting');
     }
 	
@@ -110,20 +112,27 @@ class JwAccounting extends MY_Controller {
 		$Congre_details = $this->Public_Model->get_data_record('tbl_congregation_detail', " 1 = 1 ", null, null
 																		, '*');
 
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 																, '*');
 		
-		$tc_details = $this->Public_Model->get_data_all('tbl_transaction_code', " type <> 'IO' ", null, null
-																, '*');
-		
-		$currency_details = $this->Public_Model->get_data_all('tblcurrency', " 1 = 1 ", null, null
-																, '*');			
+		$tc_details = $this->Public_Model->get_data_all('tbl_transaction_code', " type <> 'IO' and tbl_transaction_code_id <> 8 ", null, null
+																, '*');		
 																
 		$account_details = $this->Public_Model->get_data_all('tbl_account', " 1 = 1 ", null, null
+																, '*');
+		
+		
+		$currency_details = $this->Public_Model->get_data_all('tblcurrency', " 1 = 1 "
+																, null, null
 																, '*');	
+		
+		$vw_to_62 = $this->Public_Model->get_data_all('vw_to_62', " currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1).
+															   " AND period_status = 'Open'  ", null, null
+																, '*');
 
-		$TO62_Finalizing = $this->Public_Model->get_data_all('vw_currency_valid_for_to62', " 1 = 1 ", null, null
-																, '*');	
+		$cashStand = $this->Public_Model->get_data_record('vw_cash_box_standing', " currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1).
+															   " AND status = 'Open'  ", null, null
+																, '*');
 		
 		
 		
@@ -133,19 +142,18 @@ class JwAccounting extends MY_Controller {
 		$data['city'] = $Congre_details->city;
 		$data['province_state'] = $Congre_details->province_state;
 		$data['sequenceno'] = $period_details->sequenceno;
+		$data['tbl_period_id'] = $period_details->tbl_period_id;
 		$data['tc_details'] = $tc_details;
-		$data['currency_details'] = $currency_details;
-		$data['account_details'] = $account_details;
-		$data['TO62_Finalizing'] = $TO62_Finalizing;
 
-		foreach($TO62_Finalizing as $TO62each)
+		if(!isset($_SESSION['default_currency']))
 		{
-			$TO62_Details = $this->Public_Model->get_data_all('vw_to_62', " currency_id = ".$TO62each->currency_id.
-															   " AND period_status = 'Open'  ", null, null
-																, '*');
-			
-			$vw_to_62['TO62_DET_'.$TO62each->currency] = $TO62_Details;
+			$_SESSION['currencies'] = $currency_details;
+			$_SESSION['default_currency'] = $_SESSION['currencies'][0];
 		}
+
+		$data['currency_details'] = $currency_details;
+		$data['account_details'] = $account_details;		
+		$data['vw_to_62'] = $vw_to_62;
 
 		if($this->session->flashdata('navPillSelect'))
 		{
@@ -157,6 +165,7 @@ class JwAccounting extends MY_Controller {
 		}
 
 		$data['vw_to_62'] = $vw_to_62;
+		$data['cashStand'] = $cashStand;
 
 		$this->loadpage('dashboard',$data);
 	}
@@ -173,14 +182,19 @@ class JwAccounting extends MY_Controller {
 		}
 	}
 
-	public function patient_registration_form(){
+	public function defaultingCurrency($currencyID){
 	  
-	    $head = array();
-        $data = array();
-        $head['title'] = lang('user_register');
-        $head['description'] = lang('user_register');
-        $head['keywords'] = str_replace(" ", ",", $head['title']);
-        $this->render('signup', $head, $data);
+	    $_SESSION['default_currency'] = $_SESSION['currencies'][0];
+
+		foreach($_SESSION['currencies'] as $eachCurrency)
+		{
+			if($eachCurrency->currency_id == $currencyID)
+			{
+				$_SESSION['default_currency'] = $eachCurrency;
+			}
+		}
+
+		redirect('JwAccounting');
 		
 	  }
 	
@@ -190,8 +204,6 @@ class JwAccounting extends MY_Controller {
 		 									, 'trim|required|callback_transdate_check');
 		 $this->form_validation->set_rules('amount', 'Amount Of Transanction', 'required');
 		 $this->form_validation->set_rules('tc', 'Transanction Type'
-		 									, 'trim|required|callback_selection_check');
-		 $this->form_validation->set_rules('currency', 'Currency Type'
 		 									, 'trim|required|callback_selection_check');
 
 		 $this->form_validation->set_rules('descrip', 'Description Of Transanction', 'required');
@@ -213,21 +225,135 @@ class JwAccounting extends MY_Controller {
 	
 	else
 	{
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
+		$size_running_analysis_acc = 0;
+		$acc_runningNet[1] = 0.00;
+		$acc_runningNet[2] = 0.00;
+		$acc_runningNet[3] = 0.00;
+		$amountForCongreUseThen = 0.00;
+
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 																, '*');
+
+		$tc_details = $this->Public_Model->get_data_record('tbl_transaction_code', " tbl_transaction_code_id = ".$this->input->post('tc')
+															, null, null, '*');
 		
+		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'Open' 
+																				AND currency_id = ".$_SESSION['default_currency']->currency_id
+																 , null, null, '*');
+													
+		$vw_account_standing_p2p = $this->Public_Model->get_data_record('vw_account_standing_p2p', " status = 'Open' 
+																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
+																		." AND tbl_account_id = ".$this->input->post('account')
+																 		, null, null, '*');
+		$sortby[] =  array('field'=>'trans_day'
+							 , 'direction' => "asc");
+		
+		$sortby[] =  array('field'=>'createdate'
+							 , 'direction' => "asc");
+
+		$vw_running_analysis_acc = $this->Public_Model->get_data_all('vw_running_analysis_acc', " status = 'Open' 
+																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
+																	 ." AND trans_day <= DAY('".$this->input->post('transdate')."')"
+																 		, $sortby, null, '*');
+		
+										
+		if(isset($vw_running_analysis_acc[0]->trans_day))
+		{
+			$size_running_analysis_acc = sizeof($vw_running_analysis_acc);
+			$amountForCongreUseThen = $vw_running_analysis_acc[$size_running_analysis_acc-1]->running_amnt_for_congr_expense;
+			$acc_runningNet[1] = $vw_running_analysis_acc[($size_running_analysis_acc-1)]->running_rec_net;
+			$acc_runningNet[2] = $vw_running_analysis_acc[($size_running_analysis_acc-1)]->running_prim_net;
+		}
+
 		 $data = array( 
             'transanction_date' => $this->input->post('transdate'), 
             'description' => $this->input->post('descrip'), 
             'transaction_code_id' => $this->input->post('tc'), 
             'amount' => $this->input->post('amount'), 
-            'currency_id' => $this->input->post('currency'), 
+            'currency_id' => $_SESSION['default_currency']->currency_id, 
             'account_id' => $this->input->post('account'), 
             'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time()),
 			'period_id' => $period_details->tbl_period_id
-         ); 
+         );
 		 
-		 $this->post_ID = $this->Public_Model->insert_and_return_key($data,'tbl_ledger_s_26');
+		 // Handle Expenses and Amount Outflows
+		 if($tc_details->transaction_code == 'E' && $this->input->post('account') != 2)
+		 {
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('errorDesc', "Expense Amount Cannot Be Captured On This Account");
+			$this->session->set_flashdata('navPillSelect', 'capture-trans');
+			$this->allowAccess();
+			return;
+		 }
+		 else if($tc_details->transaction_code == 'E' && $this->input->post('account') == 2
+		 		&& ($this->input->post('amount') > $vw_cash_box_snap->amount_in_cash_box_less_ww
+					|| $this->input->post('amount') > $amountForCongreUseThen)
+				)
+		 {
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('errorDesc', "Expense Amount ".$this->input->post('amount')." Is Greater Than Amount In  Cash Box For Congregation Use");
+			$this->session->set_flashdata('navPillSelect', 'capture-trans');
+			$this->allowAccess();
+			return;
+		 }
+		 else if($tc_details->transaction_code == 'DO' && $this->input->post('account')  != 1)
+		 {
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('errorDesc', "You Cannot Deposit from This Account");
+			$this->session->set_flashdata('navPillSelect', 'capture-trans');
+			$this->allowAccess();
+			return;
+		 }
+		 else if(($tc_details->transaction_code == 'FRXWO' || $tc_details->transaction_code == 'FRXCO' || $tc_details->transaction_code == 'FRXWI' || $tc_details->transaction_code == 'FRXCI') 
+		 		 && $this->input->post('account')  != 2)
+		 {
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('errorDesc', "You Cannot Exchange Currency In This Account");
+			$this->session->set_flashdata('navPillSelect', 'capture-trans');
+			$this->allowAccess();
+			return;
+		 }
+		 else if($tc_details->transaction_code == 'DI' && ($this->input->post('account')  == 1 || $this->input->post('account')  == 3 ))
+		 {
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('errorDesc', "You Cannot Deposit Into This Account");
+			$this->session->set_flashdata('navPillSelect', 'capture-trans');
+			$this->allowAccess();
+			return;
+		 }
+		 else if($tc_details->type == 'O' && $tc_details->transaction_code != 'E'
+		 		  && ( $this->input->post('amount') > $vw_account_standing_p2p->account_net_amount
+				 	|| $this->input->post('amount') > $acc_runningNet[$this->input->post('account')])
+				 )
+		 {
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('errorDesc', "Outbound Amount ".$this->input->post('amount')." Is Greater Than Amount In Account");
+			$this->session->set_flashdata('navPillSelect', 'capture-trans');
+			$this->allowAccess();
+			return;
+		 }
+
+		 // EOF Handle Expenses and Amount Outflows
+		 if($this->input->post('amount') > 0)
+		 {
+		 	$this->post_ID = $this->Public_Model->insert_and_return_key($data,'tbl_ledger_s_26');
+
+			if($tc_details->transaction_code == 'DO')
+			{
+				$data = array( 
+					'transanction_date' => $this->input->post('transdate'), 
+					'description' => $this->input->post('descrip'), 
+					'transaction_code_id' => 8, 
+					'amount' => $this->input->post('amount'), 
+					'currency_id' => $_SESSION['default_currency']->currency_id, 
+					'account_id' => 2, 
+					'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time()),
+					'period_id' => $period_details->tbl_period_id
+				 );
+
+				 $this->Public_Model->insert($data,'tbl_ledger_s_26');
+			}
+		 }
 		 						
 		 $this->session->set_flashdata('userSuccess', 'Posting Successfull');
          redirect('JwAccounting');		 
@@ -242,25 +368,25 @@ class JwAccounting extends MY_Controller {
 		$amount = 0.00;
 		$this->load->library('form_validation');
 
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 															   , '*');
 
 		$TO62_TransType = $this->Public_Model->get_data_all('tbl_to_62_trans_type', " 1 = 1 ", null, null
 																, '*');
-		
-		$to_62_reference = $this->Public_Model->get_data_record('tbl_to_62_reference', " period_id = ".$period_details->tbl_period_id
-																." AND currency_id = ".$this->input->post('currID')
-																, null, null, '*');
+							
+		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'Open' 
+																				AND currency_id = ".$_SESSION['default_currency']->currency_id
+																 , null, null, '*');
 
-		$this->form_validation->set_rules('transdate'.$this->input->post('currName'), 'Date Of Transanction!'
+		$this->form_validation->set_rules('transdate', 'Date Of Transanction!'
 											, 'trim|required|callback_transdate_check');
-		$this->form_validation->set_rules('transMethod'.$this->input->post('currName'), 'Transanction Method'
+		$this->form_validation->set_rules('transMethod', 'Transanction Method'
 											, 'trim|required|callback_selection_check');
 		//$this->form_validation->set_rules('refno', 'Refference Number', 'required');
 
 		foreach($TO62_TransType as $TO62_Each)
 		{
-			$this->form_validation->set_rules('input'.$TO62_Each->tbl_to_62_trans_type_id.$this->input->post('currName'), 'Amount Of '.$TO62_Each->description, 'required');
+			$this->form_validation->set_rules('input'.$TO62_Each->tbl_to_62_trans_type_id, 'Amount Of '.$TO62_Each->description, 'required');
 		}
 		
 		
@@ -269,39 +395,198 @@ class JwAccounting extends MY_Controller {
 	   //die('failed');
 	   $this->session->set_flashdata('userError', 'Posting Error');
 	   $this->session->set_flashdata('navPillSelect', 'process-TO62');
-	   $this->session->set_flashdata('TO-62'.$this->input->post('currName'), 'active');
-	   $this->session->set_flashdata('errorTO-62-Currency', $this->input->post('currName'));
+	   $this->session->set_flashdata('errorTO-62-Currency', 'Postng Error');
 	   $this->allowAccess();
    }
    
    else
    {
-	   
-	   
-		$data = array( 
-		   'transanction_date' => $this->input->post('transdate'), 
-		   'description' => $this->input->post('descrip'), 
-		   'transaction_code_id' => $this->input->post('tc'), 
-		   'amount' => $this->input->post('amount'), 
-		   'currency_id' => $this->input->post('currency'), 
-		   'account_id' => $this->input->post('account'), 
-		   'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time()),
-		   'period_id' => $period_details->tbl_period_id
-		); 
+
+		$acc_runningNet[2] = 0.00;
+
+		$sortby[] =  array('field'=>'trans_day'
+							 , 'direction' => "asc");
 		
-		$this->post_ID = $this->Public_Model->insert_and_return_key($data,'tbl_ledger_s_26');
-								
-		$this->session->set_flashdata('userSuccess', 'Posting Successfull');
-		redirect('JwAccounting');		 
+		$sortby[] =  array('field'=>'createdate'
+							 , 'direction' => "asc");
+
+		$vw_running_analysis_acc = $this->Public_Model->get_data_all('vw_running_analysis_acc', " status = 'Open' 
+																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
+																	 ." AND trans_day <= DAY('".$this->input->post('transdate')."')"
+																 		, $sortby, null, '*');
+		
+		if(isset($vw_running_analysis_acc[0]->trans_day))
+		{
+			$acc_runningNet[2] = $vw_running_analysis_acc[($size_running_analysis_acc-1)]->running_prim_net;
+		}
+		
+		foreach($TO62_TransType as $TO62_Each)
+		{
+			$amount += $this->input->post('input'.$TO62_Each->tbl_to_62_trans_type_id);
+		}
+
+
+		if($amount > $vw_cash_box_snap->primary_account_net || $amount > $acc_runningNet[2])
+		{
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('navPillSelect', 'process-TO62');
+	   		$this->session->set_flashdata('errorTO-62-Currency', "Amount {$amount} is greater than amount in cash box");
+			$this->session->set_flashdata('errorDesc', "Amount {$amount} is greater than amount in cash box");
+			$this->allowAccess();
+		}
+		else
+		{
+			// Handle tbl_to_62_reference
+			$to62ReferenceID = $this->handleTblTO62Reference($this->input);
+			
+			// Handle recordOfFundTransfer
+			$this->handleRecordOfFundTransfer($this->input, $to62ReferenceID);
+
+			// Handle amountToS26
+			$this->handleAmountToS26($this->input, $to62ReferenceID);
+
+			$ledegerS26 = $this->Public_Model->get_data_record('tbl_ledger_s_26', " period_id = ".$period_details->tbl_period_id
+															    ." AND transaction_code_id  = 10 "
+																, null, null, '*');
+
+			$data = array( 
+				'transanction_date' => $this->input->post('transdate'), 
+				'description' => "To Branch Office - ".$this->input->post('refno'), 
+				'transaction_code_id' => 10, 
+				'amount' => $amount, 
+				'currency_id' => $_SESSION['default_currency']->currency_id, 
+				'account_id' => 2, 
+				'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time()),
+				'period_id' => $period_details->tbl_period_id
+			 );
+			 
+			 if(isset($ledegerS26->tbl_ledger_S_26_id) && $this->input->post('refno') != '')
+			 {
+				$this->Public_Model->update($data,"tbl_ledger_S_26_id",$ledegerS26->tbl_ledger_S_26_id,"tbl_ledger_s_26" );
+			 }
+			 else if($amount > 0 && $this->input->post('refno') != '')
+			 {
+				$this->Public_Model->insert($data,'tbl_ledger_s_26');
+			 }
+			 // EOF Handle amountToS26
+									 
+			 $this->session->set_flashdata('userSuccess', 'Posting Successfull');
+			 redirect('JwAccounting');
+		}
+	   
+				 
    
    }
 		
 	   
 	 }
 
+	function handleTblTO62Reference($postData)
+	{
+		$insertedID = 0;
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
+																, '*');
+														
+		$to_62_reference_details = $this->Public_Model->get_data_record('tbl_to_62_reference', " period_id = ".$period_details->tbl_period_id
+																		." AND currency_id = ".$_SESSION['default_currency']->currency_id
+																		, null, null, '*');
+		
+		$data = array( 
+				'currency_id' => $_SESSION['default_currency']->currency_id, 
+				'period_id' => $period_details->tbl_period_id,
+				'referrence_no' => $postData->post('refno'), 
+				'transfer_method' => $postData->post('transMethod'), 
+				'transer_date' => $postData->post('transdate'),
+				'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time())
+			 );
+
+		if(isset($to_62_reference_details->tbl_to_62_reference_id))
+		{
+			$this->Public_Model->update($data,"tbl_to_62_reference_id",$to_62_reference_details->tbl_to_62_reference_id,"tbl_to_62_reference" );
+		}
+		else
+		{
+			$insertedID = $this->Public_Model->insert_and_return_key($data,'tbl_to_62_reference');
+		}
+
+		return isset($to_62_reference_details->tbl_to_62_reference_id)?$to_62_reference_details->tbl_to_62_reference_id:$insertedID;
+	}
+
+	function handleRecordOfFundTransfer($postData, $to62ReferenceID)
+	{
+		$insertedID = 0;
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
+																, '*');
+			
+		$vw_to_62 = $this->Public_Model->get_data_all('vw_to_62', " currency_id = ".$_SESSION['default_currency']->currency_id
+															   ." AND period_status = 'Open'  ", null, null
+																, '*');															
+		foreach($vw_to_62 as $vw_to_62Each)
+		{
+			$data = array( 
+				'amount' => $postData->post('input'.$vw_to_62Each->tbl_to_62_trans_type_id), 
+				'to_62_reference' => $to62ReferenceID,
+				'to_62_trans_type_id' => $vw_to_62Each->tbl_to_62_trans_type_id, 
+				'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time())
+			 );
+
+			if(isset($vw_to_62Each->to_62_trans_type_id))
+			{
+				$this->Public_Model->update($data,"tbl_record_funds_trans_to_62_id",$vw_to_62Each->tbl_record_funds_trans_to_62_id,"tbl_record_funds_trans_to_62" );
+			}
+			else if($postData->post('input'.$vw_to_62Each->tbl_to_62_trans_type_id) > 0)
+			{
+				$insertedID = $this->Public_Model->insert_and_return_key($data,'tbl_record_funds_trans_to_62');
+			}
+		}												
+		
+	}
+
+	public function processCashBoxStanding()
+	{
+		$this->load->library('form_validation');
+		$this->form_validation->set_rules('cash_in_box', 'Amount In Cash Box', 'required');
+
+		if ($this->form_validation->run($this) == FALSE)
+		{
+			//die('failed');
+			$this->session->set_flashdata('userError', 'Posting Error');
+			$this->session->set_flashdata('navPillSelect', 'cashBoxStanding');
+			$this->session->set_flashdata('error-cash-box-standing', 'cashBoxStanding');
+			$this->allowAccess();
+		}
+		else
+		{
+			$cashStand = $this->Public_Model->get_data_record('vw_cash_box_standing', " currency_id = ".$_SESSION['default_currency']->currency_id.
+															   " AND status = 'Open'  ", null, null
+																, '*');
+
+			$data = array( 
+				'period_id' => $cashStand->tbl_period_id, 
+				'currency_id' => $_SESSION['default_currency']->currency_id, 
+				'cash_in_box' => $this->input->post('cash_in_box'), 
+				'complete_pay_not_recorde' => $this->input->post('comp_pay_no_record'), 
+				'cash_adv_not_clr' => $this->input->post('cash_adv_no_clr'),
+				'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time())
+			 );
+
+			if(isset($cashStand->tbl_closing_details_id))
+			{
+				$this->Public_Model->update($data,"tbl_closing_details_id",$cashStand->tbl_closing_details_id,"tbl_closing_details" );
+			}
+			else
+			{
+				$this->Public_Model->insert($data,'tbl_closing_details');
+			}
+
+			$this->session->set_flashdata('userSuccess', 'Posting Successfull');
+         	redirect('JwAccounting');	
+		}
+	}
+
 	public function transdate_check($str)
 	{ 
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' 
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' 
 																				AND startdate <= '{$str}'
 																				AND enddate >= '{$str}'", null, null
 																				, '*');

@@ -1,103 +1,37 @@
-//window.history.forward(1);
-
-function loginRwdFromGuest()
+function generateReport(period_id, type)
 {
-	location.href = ci_base_url+'login';
-}
+	$("#reportExtractModal").modal();
 
-function registerFromSnlGuest()
-{
-	var error = '';
-	// Validations
-	var phone_email_el = document.getElementById('email_phone_el');
-	var cb_copy_pass = document.getElementById('copy_pass_check');
-	var confirm_sup_infor = document.getElementById('supplied_correct');
-	var error_def_el = document.getElementById('error_def');
-	var notif_error_el = document.getElementById('notif_error');
-	var regBtn_el = document.getElementById('registerBtn');
-	var spinnerLoad_el = document.getElementById('spinnerLoad');
-	
-	if(phone_email_el.value == '')
-		{
-			error += 'Email Or Phone Is Required <br/>';
-		}
-	
-	if(cb_copy_pass.checked == false)
-		{
-			error += 'Copy Your Password And Confirm <br/>';
-		}
-	
-	if(confirm_sup_infor.checked == false)
-		{
-			error += 'Confirm That The Supplied Infor Is Correct <br/>';
-		}
-	
-	error_def_el.innerHTML = error;
-	
-	
-	if(error != '')
-		{
-			notif_error_el.removeAttribute("hidden");
-		}
-	
-	
-	// EOF Validations
-	
-	
-	if(error == '')
-		{
-			
-			notif_error_el.setAttribute("hidden", "hidden");
-			regBtn_el.setAttribute("class", "btn btn-primary disabled");
-			spinnerLoad_el.removeAttribute("hidden");
-			req_in();
-			
-         }
-	
-	
-	
-	function req_in() {
-		$.ajax({
-        type: "GET",
-        url: ci_base_url+"register_snl_easy_rwd/"+phone_email_el.value+'/'+passForRegister,
-        //headers: {  'Access-Control-Allow-Origin': '*' },
-        //data: {patient_id: patient_id, order_id: order_id},
-        //type: 'dataType'
-    }).done(function (data) {
-		
-    	obj = JSON.parse(data);
-		if(obj.status == 'true')
-		{
-		 console.log('uni_id => '+ obj.uni_id);
-		 updateCodeBreakerEastRWD(obj.uni_id);
-		}
-		else if(obj.status == 'false')
-		{
-			error = obj.error;
-			error_def_el.innerHTML = error;
-			notif_error_el.removeAttribute("hidden");
-			regBtn_el.setAttribute("class", "btn btn-primary");
-			spinnerLoad_el.setAttribute("hidden", "hidden");
-			
-		}
-		
-    }).fail(function (err) {
-    	console.log('fail');
-    	req_in();
-    }).always(function () {
-    });
+	var UrlSelectionReport = '';
+
+	if(type == 's26')
+	{
+		UrlSelectionReport = 'generate-report-s26'
 	}
-}
+	else if(type == 'to62')
+	{
+		UrlSelectionReport = 'generate-report-to62'
+	}
+	else if(type == 's30')
+	{
+		UrlSelectionReport = 'generate-report-s30'
+	}
 
-function updateCodeBreakerEastRWD(uni_id)
-{
+	
+	var spinnerLoad_el = document.getElementById('spinnerLoad');
+	var downloadJwPDF_el = document.getElementById('downloadJwPDF');
+	var urlRequestPDF = '';
+	
+	spinnerLoad_el.removeAttribute("hidden");
+	downloadJwPDF_el.innerHTML = '';
+
 	
 	req_in();
 	
 	function req_in() {
 		$.ajax({
         type: "GET",
-        url: reqBaseURL+'codebreaker/register_snl/'+uni_id+'/'+uidFromServer,
+        url: ci_base_url+UrlSelectionReport+"/"+period_id,
         //headers: {  'Access-Control-Allow-Origin': '*' },
         //data: {patient_id: patient_id, order_id: order_id},
         //type: 'dataType'
@@ -106,7 +40,16 @@ function updateCodeBreakerEastRWD(uni_id)
     	obj = JSON.parse(data);
 		if(obj.status == 'true')
 		{
-		   location.href = ci_base_url+'login?registersuc=true'
+			urlRequestPDF = reportURL + obj.response;
+			var forDownload = '<a href="'+urlRequestPDF+'" class=" d-sm-inline-block btn btn-sm btn-success shadow-sm" download><i class="fas fa-download fa-sm text-white-50"></i>'+obj.response+'</a>';
+		   spinnerLoad_el.setAttribute("hidden", "hidden");
+
+		   downloadJwPDF_el.innerHTML = forDownload;
+		}
+		else if(obj.status == 'false')
+		{
+						
+			spinnerLoad_el.removeAttribute("hidden");
 		}
 		
     }).fail(function (err) {

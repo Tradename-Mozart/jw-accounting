@@ -11,6 +11,8 @@
 
         ?>
         
+    <h1><?= $_SESSION['default_currency']->currency ?></h1>
+
 	<div class="row">
 				<?php echo form_open_multipart('post-transaction', array('role' => 'form')); ?>
 					<div class="col-sm-12">
@@ -44,30 +46,7 @@
                                 </select>
 							</div>
 
-							<div class="col-sm-6 form-group <?php echo (form_error('currency')?"form-group has-warning":""); ?>">
-								<label>Currency</label>
-                                <select class="form-control" name='currency' id="<?php echo (form_error('currency')?"inputError":""); ?>">
-                                
-                                <?php echo (set_value('currency') == 'select...') ? '<option value="0" selected>' : '<option value="0">';?>
-                                select...</option>
-                                <?php foreach($currency_details AS $currency_detail_each) { ?>
-                                <?php echo (set_value('currency') == $currency_detail_each->currency_id) 
-                                                               ?'<option value="'.$currency_detail_each->currency_id.'" selected>' 
-                                                               :'<option value="'.$currency_detail_each->currency_id.'" >';?>
-                                <?= $currency_detail_each->currency ?></option>
-                                <?php } ?>
-                                
-                                </select>
-							</div>
-
-                            <div class="col-sm-12 form-group <?php echo (form_error('descrip')?"form-group has-warning":""); ?>">
-                                            <label>Description</label>
-                                            <textarea class="form-control desTextArea" name="descrip" rows="3" value="<?php echo set_value('descrip'); ?>"
-                                            id="<?php echo (form_error('descrip')?"inputError":"desTextArea"); ?>"><?php echo set_value('descrip'); ?></textarea>
-                                        </div>
-
-                            
-                            <div class="col-sm-6 form-group <?php echo (form_error('account')?"form-group has-warning":""); ?>">
+							<div class="col-sm-6 form-group <?php echo (form_error('account')?"form-group has-warning":""); ?>">
 								<label>Account</label>
                                 <select class="form-control" name='account' id="<?php echo (form_error('account')?"inputError":""); ?>">
                                 
@@ -82,6 +61,15 @@
                                 
                                 </select>
 							</div>
+
+                            <div class="col-sm-12 form-group <?php echo (form_error('descrip')?"form-group has-warning":""); ?>">
+                                            <label>Description</label>
+                                            <textarea class="form-control desTextArea" name="descrip" rows="3" value="<?php echo set_value('descrip'); ?>"
+                                            id="<?php echo (form_error('descrip')?"inputError":"desTextArea"); ?>"><?php echo set_value('descrip'); ?></textarea>
+                                        </div>
+
+                            
+                            
 
                             <div class="col-sm-12 form-group <?php echo (form_error('confirm_det')?"form-group has-warning":""); ?>">
                                             <label>Confirm Details Are Correct</label>

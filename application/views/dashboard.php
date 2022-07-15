@@ -2,13 +2,13 @@
 <div class="container-fluid">
 
 <!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
+<!--div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
     <a href="#" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
             class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
     <a href="#" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
     class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
-</div>
+</div-->
 
 
  <!-- Card Row -->
@@ -76,17 +76,8 @@
             <div class="row no-gutters align-items-center">
                 <div class="col mr-2">
                     <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                        Cash Box less WW</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                    
-                    <select class="form-control" name='transMethod<?= $to_62_currency ?>' id="<?php echo (form_error('transMethod'.$to_62_currency)?"inputError":""); ?>">
-                                
-                                <option value="0" selected>USD 45</option>
-								<option value="0">ZWL 111</option>  
-                                <option value="0">RAND 234</option>                                                           
-                    </select>
-
-                    </div>
+                    PlaceHolder</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800"> PlaceHolder</div>
                 </div>
                 <div class="col-auto">
                     <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -123,15 +114,15 @@
                     Capture Transanction
                     </a>
                     </li>
-                    <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <?php echo ($navPillSelect == 'process-TO62'?"active":""); ?>" data-toggle="dropdown" href="#">Process TO-62</a>
-                    <div class="dropdown-menu">
-                    <?php foreach($TO62_Finalizing AS $TO62_Finalizing_each) { ?>
-                        <a class="dropdown-item <?php echo ($this->session->flashdata('TO-62'.$TO62_Finalizing_each->currency)?"active":""); ?>" data-toggle="tab" href="#TO-62<?= $TO62_Finalizing_each->currency ?>">
-                        <?= $TO62_Finalizing_each->currency ?>
-                        </a>
-                    <?php } ?>
-                    </div>
+                    <li class="nav-item ">
+                    <a class="nav-link <?php echo ($navPillSelect == 'process-TO62'?"active":""); ?>" data-toggle="tab" href="#process-TO62">
+                    Process TO-62
+                    </a>
+                    </li>
+                    <li class="nav-item ">
+                    <a class="nav-link <?php echo ($navPillSelect == 'cashBoxStanding'?"active":""); ?>" data-toggle="tab" href="#cashBoxStanding">
+                    Cash Box Standing
+                    </a>
                     </li>
                 </ul>                
                 <!-- Nav Tabls-->
@@ -151,15 +142,16 @@
             <div id="capture-trans" class="container tab-pane <?php echo ($navPillSelect == 'capture-trans'?"active":"fade"); ?>"><br>
             <?php $this->load->view('capture-trans'); ?>
             </div>
-            <?php foreach($TO62_Finalizing AS $TO62_Finalizing_each) { 
-                  $dataForTO62['to_62Det'] = $vw_to_62['TO62_DET_'.$TO62_Finalizing_each->currency];
-                  $dataForTO62['to_62_currency'] = $TO62_Finalizing_each->currency;
-                  $dataForTO62['to_62_currency_id'] = $TO62_Finalizing_each->currency_id;
+            <div id="process-TO62" class="container tab-pane <?php echo ($navPillSelect == 'process-TO62'?"active":"fade"); ?>"><br>
+            <?php $dataForTO62['to_62Det'] = $vw_to_62;
+                  $this->load->view('to-62', $dataForTO62); 
             ?>
-            <div id="TO-62<?= $TO62_Finalizing_each->currency ?>" class="container tab-pane <?php echo ($this->session->flashdata('TO-62'.$TO62_Finalizing_each->currency)?"active":"fade"); ?>"><br>
-            <?php $this->load->view('to-62', $dataForTO62); ?>
             </div>
-            <?php } ?>
+            <div id="cashBoxStanding" class="container tab-pane <?php echo ($navPillSelect == 'cashBoxStanding'?"active":"fade"); ?>"><br>
+            <?php $dataForCash['cashStand'] = $cashStand;
+                  $this->load->view('cash-box-standing', $dataForCash); 
+            ?>
+            </div>
             </div>
             </div>
         </div>
