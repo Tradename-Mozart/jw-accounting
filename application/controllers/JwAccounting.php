@@ -112,7 +112,7 @@ class JwAccounting extends MY_Controller {
 		$Congre_details = $this->Public_Model->get_data_record('tbl_congregation_detail', " 1 = 1 ", null, null
 																		, '*');
 
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 																, '*');
 		
 		$tc_details = $this->Public_Model->get_data_all('tbl_transaction_code', " type <> 'IO' and tbl_transaction_code_id <> 8 ", null, null
@@ -142,6 +142,7 @@ class JwAccounting extends MY_Controller {
 		$data['city'] = $Congre_details->city;
 		$data['province_state'] = $Congre_details->province_state;
 		$data['sequenceno'] = $period_details->sequenceno;
+		$data['tbl_period_id'] = $period_details->tbl_period_id;
 		$data['tc_details'] = $tc_details;
 
 		if(!isset($_SESSION['default_currency']))
@@ -230,17 +231,17 @@ class JwAccounting extends MY_Controller {
 		$acc_runningNet[3] = 0.00;
 		$amountForCongreUseThen = 0.00;
 
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 																, '*');
 
 		$tc_details = $this->Public_Model->get_data_record('tbl_transaction_code', " tbl_transaction_code_id = ".$this->input->post('tc')
 															, null, null, '*');
 		
-		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'open' 
+		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'Open' 
 																				AND currency_id = ".$_SESSION['default_currency']->currency_id
 																 , null, null, '*');
 													
-		$vw_account_standing_p2p = $this->Public_Model->get_data_record('vw_account_standing_p2p', " status = 'open' 
+		$vw_account_standing_p2p = $this->Public_Model->get_data_record('vw_account_standing_p2p', " status = 'Open' 
 																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
 																		." AND tbl_account_id = ".$this->input->post('account')
 																 		, null, null, '*');
@@ -250,7 +251,7 @@ class JwAccounting extends MY_Controller {
 		$sortby[] =  array('field'=>'createdate'
 							 , 'direction' => "asc");
 
-		$vw_running_analysis_acc = $this->Public_Model->get_data_all('vw_running_analysis_acc', " status = 'open' 
+		$vw_running_analysis_acc = $this->Public_Model->get_data_all('vw_running_analysis_acc', " status = 'Open' 
 																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
 																	 ." AND trans_day <= DAY('".$this->input->post('transdate')."')"
 																 		, $sortby, null, '*');
@@ -285,8 +286,9 @@ class JwAccounting extends MY_Controller {
 			return;
 		 }
 		 else if($tc_details->transaction_code == 'E' && $this->input->post('account') == 2
-		 		&& $this->input->post('amount') > $vw_cash_box_snap->amount_in_cash_box_less_ww
-				&& $this->input->post('amount') > $amountForCongreUseThen)
+		 		&& ($this->input->post('amount') > $vw_cash_box_snap->amount_in_cash_box_less_ww
+					|| $this->input->post('amount') > $amountForCongreUseThen)
+				)
 		 {
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "Expense Amount ".$this->input->post('amount')." Is Greater Than Amount In  Cash Box For Congregation Use");
@@ -320,8 +322,9 @@ class JwAccounting extends MY_Controller {
 			return;
 		 }
 		 else if($tc_details->type == 'O' && $tc_details->transaction_code != 'E'
-		 		 && $this->input->post('amount') > $vw_account_standing_p2p->account_net_amount
-				 && $this->input->post('amount') > $acc_runningNet[$this->input->post('account')])
+		 		  && ( $this->input->post('amount') > $vw_account_standing_p2p->account_net_amount
+				 	|| $this->input->post('amount') > $acc_runningNet[$this->input->post('account')])
+				 )
 		 {
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "Outbound Amount ".$this->input->post('amount')." Is Greater Than Amount In Account");
@@ -365,13 +368,13 @@ class JwAccounting extends MY_Controller {
 		$amount = 0.00;
 		$this->load->library('form_validation');
 
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 															   , '*');
 
 		$TO62_TransType = $this->Public_Model->get_data_all('tbl_to_62_trans_type', " 1 = 1 ", null, null
 																, '*');
 							
-		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'open' 
+		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'Open' 
 																				AND currency_id = ".$_SESSION['default_currency']->currency_id
 																 , null, null, '*');
 
@@ -398,6 +401,24 @@ class JwAccounting extends MY_Controller {
    
    else
    {
+
+		$acc_runningNet[2] = 0.00;
+
+		$sortby[] =  array('field'=>'trans_day'
+							 , 'direction' => "asc");
+		
+		$sortby[] =  array('field'=>'createdate'
+							 , 'direction' => "asc");
+
+		$vw_running_analysis_acc = $this->Public_Model->get_data_all('vw_running_analysis_acc', " status = 'Open' 
+																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
+																	 ." AND trans_day <= DAY('".$this->input->post('transdate')."')"
+																 		, $sortby, null, '*');
+		
+		if(isset($vw_running_analysis_acc[0]->trans_day))
+		{
+			$acc_runningNet[2] = $vw_running_analysis_acc[($size_running_analysis_acc-1)]->running_prim_net;
+		}
 		
 		foreach($TO62_TransType as $TO62_Each)
 		{
@@ -405,7 +426,7 @@ class JwAccounting extends MY_Controller {
 		}
 
 
-		if($amount > $vw_cash_box_snap->primary_account_net)
+		if($amount > $vw_cash_box_snap->primary_account_net || $amount > $acc_runningNet[2])
 		{
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('navPillSelect', 'process-TO62');
@@ -463,7 +484,7 @@ class JwAccounting extends MY_Controller {
 	function handleTblTO62Reference($postData)
 	{
 		$insertedID = 0;
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 																, '*');
 														
 		$to_62_reference_details = $this->Public_Model->get_data_record('tbl_to_62_reference', " period_id = ".$period_details->tbl_period_id
@@ -494,7 +515,7 @@ class JwAccounting extends MY_Controller {
 	function handleRecordOfFundTransfer($postData, $to62ReferenceID)
 	{
 		$insertedID = 0;
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' ", null, null
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 																, '*');
 			
 		$vw_to_62 = $this->Public_Model->get_data_all('vw_to_62', " currency_id = ".$_SESSION['default_currency']->currency_id
@@ -565,7 +586,7 @@ class JwAccounting extends MY_Controller {
 
 	public function transdate_check($str)
 	{ 
-		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'open' 
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' 
 																				AND startdate <= '{$str}'
 																				AND enddate >= '{$str}'", null, null
 																				, '*');

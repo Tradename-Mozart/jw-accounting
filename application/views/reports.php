@@ -35,14 +35,13 @@
             <div class="card-body">
 
             <div class="table-responsive">
-                <table width="100%" class="table table-striped table-bordered table-hover table-products" id="leaderboad_per_Campaign">
+                <table width="100%" class="table table-striped table-bordered table-hover table-products" id="period_reports">
                     <thead>
                         <tr>
-                            <th>Position</th>
-                            <th>Player</th>
-                            <th>Contact</th>
-                            <th>Accumulated Score</th>
-                            <th>Highest Score</th>
+                            <th>Period</th>
+                            <th>S-26</th>
+                            <th>TO-62</th>
+                            <th>S-30</th>
                         </tr>
                     </thead>
                     <tbody>

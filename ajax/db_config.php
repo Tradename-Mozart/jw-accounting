@@ -2,7 +2,7 @@
 
 	$gaSql['user']       = "root";
 	$gaSql['password']   = "";
-	$gaSql['db']         = "codebreaker_easyrwd";//"uhealthzim";
+	$gaSql['db']         = "jw_accounting";//"uhealthzim";
 	$gaSql['server']     = "localhost";
 
 // Live Prod
