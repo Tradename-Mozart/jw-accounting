@@ -30,7 +30,10 @@ require_once('webroot.php');
     'rec_in',
     'rec_out',
     'prim_in',
-    'prim_out'  
+    'prim_out',
+	'createdate_actual_form',
+	'tbl_ledger_S_26_id',
+	'transaction_code_id'  
   );
     
    /* Indexed column (used for fast and accurate table cardinality) */
@@ -237,11 +240,34 @@ require_once('webroot.php');
 			foreach($row AS $r => $a)
 			{		
 				if($r == 0)
-				{		
+				{	
+					if($row[0] != 52 && $row[9] != 10)
+					{
+						$row[7] = '<a onClick="deleteTransanction('.$row[0].','.$row[9].', \''.$row[7].'\',\''.$row[8].'\')" class=" d-sm-inline-block btn btn-sm btn-warning shadow-sm"><i
+										class="fas fa-trash fa-sm text-white-50"></i></a>';
+					}
+					else
+					{
+						$row[7] = NULL;
+					}
+					
 					if($row[0] == 52)
 					{
 						$row[0] = '';
-					}	
+					}
+					
+					if($row[2] == 'CTBSUP')
+					{
+						$row[2] = NULL;
+						$row[0] = NULL;
+						$row[1] = "&nbsp&nbsp&nbsp".$row[1];
+					}
+
+					$row[1] = '<small>'.$row[1].'</small>';
+					$row[3] = '<small>'.$row[3].'</small>';
+					$row[4] = '<small>'.$row[4].'</small>';
+					$row[5] = '<small>'.$row[5].'</small>';
+					$row[6] = '<small>'.$row[6].'</small>';
 				}	
 			}
 		$output['aaData'][] = $row;

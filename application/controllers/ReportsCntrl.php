@@ -111,44 +111,47 @@ class ReportsCntrl extends MY_Controller {
 		$data[$s26CAMapping['75']] = $periodDet->month_name;
 		$data[$s26CAMapping['99']] = $periodDet->year;
 
-		foreach($vw_s26_data as $vw_s26_each)
+		if(isset($vw_s26_data[0]->trans_day))
 		{
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['D'.$currFieldS26]]] = $vw_s26_each->trans_day;
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['DSCR'.$currFieldS26]]] = $vw_s26_each->description;
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['TC'.$currFieldS26]]] = $vw_s26_each->transaction_code;
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['RCI'.$currFieldS26]]] = $vw_s26_each->rec_in;
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['RCO'.$currFieldS26]]] = $vw_s26_each->rec_out;
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['PI'.$currFieldS26]]] = $vw_s26_each->prim_in;
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['PO'.$currFieldS26]]] = $vw_s26_each->prim_out;
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['SAI'.$currFieldS26]]] = $vw_s26_each->seca_in;
-			$data[$s26CAMapping[$s26CASpreadSheetMapping['SAO'.$currFieldS26]]] = $vw_s26_each->seca_out;
+			foreach($vw_s26_data as $vw_s26_each)
+			{
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['D'.$currFieldS26]]] = ($vw_s26_each->transaction_code!='CTBSUP')?$vw_s26_each->trans_day:NULL;
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['DSCR'.$currFieldS26]]] = $vw_s26_each->description;
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['TC'.$currFieldS26]]] = ($vw_s26_each->transaction_code!='CTBSUP')?$vw_s26_each->transaction_code:NULL;
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['RCI'.$currFieldS26]]] = $vw_s26_each->rec_in;
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['RCO'.$currFieldS26]]] = $vw_s26_each->rec_out;
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['PI'.$currFieldS26]]] = $vw_s26_each->prim_in;
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['PO'.$currFieldS26]]] = $vw_s26_each->prim_out;
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['SAI'.$currFieldS26]]] = $vw_s26_each->seca_in;
+				$data[$s26CAMapping[$s26CASpreadSheetMapping['SAO'.$currFieldS26]]] = $vw_s26_each->seca_out;
 
-			if(isset($vw_s26_each->rec_in))
-			{
-				$sum_rec_in += $vw_s26_each->rec_in;
-			}
-			if(isset($vw_s26_each->rec_out))
-			{
-				$sum_rec_out += $vw_s26_each->rec_out;
-			}
-			if(isset($vw_s26_each->prim_in))
-			{
-				$sum_prim_in += $vw_s26_each->prim_in;
-			}
-			if(isset($vw_s26_each->prim_out))
-			{
-				$sum_prim_out +=$vw_s26_each->prim_out;
-			}
-			if(isset($vw_s26_each->seca_in))
-			{
-				$sum_seca_in += $vw_s26_each->seca_in;
-			}
-			if(isset($vw_s26_each->seca_out))
-			{
-				$sum_seca_out += $vw_s26_each->seca_out;
-			}
+				if(isset($vw_s26_each->rec_in))
+				{
+					$sum_rec_in += $vw_s26_each->rec_in;
+				}
+				if(isset($vw_s26_each->rec_out))
+				{
+					$sum_rec_out += $vw_s26_each->rec_out;
+				}
+				if(isset($vw_s26_each->prim_in))
+				{
+					$sum_prim_in += $vw_s26_each->prim_in;
+				}
+				if(isset($vw_s26_each->prim_out))
+				{
+					$sum_prim_out +=$vw_s26_each->prim_out;
+				}
+				if(isset($vw_s26_each->seca_in))
+				{
+					$sum_seca_in += $vw_s26_each->seca_in;
+				}
+				if(isset($vw_s26_each->seca_out))
+				{
+					$sum_seca_out += $vw_s26_each->seca_out;
+				}
 
-			$currFieldS26++;
+				$currFieldS26++;
+			}
 		}
 
 		$data[$s26CAMapping['1251']] = number_format($sum_rec_in,2);
@@ -235,12 +238,12 @@ class ReportsCntrl extends MY_Controller {
 		$data['901_2_TO62Donate'] = $TO62_data[1]->amount;
 
 		$data['901_9_TO62TotalDonate'] = (isset($TO62_data[0]->amount)?$TO62_data[0]->amount:0.00)
-										 +(isset($TO62_data[1]->amount)?$TO62_data[0]->amount:0.00);
+										 +(isset($TO62_data[1]->amount)?$TO62_data[1]->amount:0.00);
 
 		$data['901_9_TO62TotalDonate'] = number_format($data['901_9_TO62TotalDonate'], 2);
 		
 		$data['901_11_TO62TotalFunds'] = (isset($TO62_data[0]->amount)?$TO62_data[0]->amount:0.00)
-										 +(isset($TO62_data[1]->amount)?$TO62_data[0]->amount:0.00);
+										 +(isset($TO62_data[1]->amount)?$TO62_data[1]->amount:0.00);
 		
 		$data['901_11_TO62TotalFunds'] = number_format($data['901_11_TO62TotalFunds'], 2);
 

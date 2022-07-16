@@ -3,6 +3,17 @@ $(document).ready(function () {
 	$('#ledger_s26').dataTable( {
 		"searching":false,
 		"lengthChange": false,
+		"columns": [
+			{ "width": "2%" },
+			{ "width": "51%" },
+			{ "width": "5%" },
+			{ "width": "10%" },
+			{ "width": "10%" },
+			{ "width": "10%" },
+			{ "width": "10%" },
+			{ "width": "2%" },
+		  ],
+		"pageLength": 50,
 		"sPaginationType": "full_numbers",
 		"bProcessing": true,
 		"bServerSide": true,
@@ -39,6 +50,7 @@ $(document).ready(function () {
 		$('#period_reports').dataTable( {
 			"searching":false,
 			"lengthChange": false,
+			"pageLength": 50,
 			"sPaginationType": "full_numbers",
 			"bProcessing": true,
 			"bServerSide": true,

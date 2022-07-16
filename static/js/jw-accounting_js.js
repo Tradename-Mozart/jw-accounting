@@ -60,6 +60,15 @@ function generateReport(period_id, type)
 	}
 }
 
+function deleteTransanction(date, tc, createdate, ledgerID)
+{
+	var delBtn_el = document.getElementById('delBtn');
+	var urlToDel = 'delrec/'+date+'/'+tc+'/'+createdate+'/'+ledgerID;
+	delBtn_el.innerHTML = '<a class="btn btn-primary" href="'+urlToDel+'">Delete</a>';
+
+	$("#deleteModal").modal();
+}
+
 function getCurrentDate()
 {
 var today = new Date();

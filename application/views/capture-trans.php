@@ -3,7 +3,7 @@
 		
 		<?php 
         
-            if(!$this->session->flashdata('errorTO-62-Currency'))
+            if($this->session->flashdata('captureTransError'))
             {
                 
                     $this->load->view('validation_error'); 

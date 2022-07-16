@@ -218,6 +218,7 @@ class JwAccounting extends MY_Controller {
          if ($this->form_validation->run($this) == FALSE)
     {
 		//die('failed');
+		$this->session->set_flashdata('captureTransError', 'Posting Error');
 		$this->session->set_flashdata('userError', 'Posting Error');
 		$this->session->set_flashdata('navPillSelect', 'capture-trans');
 		$this->allowAccess();
@@ -279,6 +280,7 @@ class JwAccounting extends MY_Controller {
 		 // Handle Expenses and Amount Outflows
 		 if($tc_details->transaction_code == 'E' && $this->input->post('account') != 2)
 		 {
+			$this->session->set_flashdata('captureTransError', 'Posting Error');
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "Expense Amount Cannot Be Captured On This Account");
 			$this->session->set_flashdata('navPillSelect', 'capture-trans');
@@ -290,6 +292,7 @@ class JwAccounting extends MY_Controller {
 					|| $this->input->post('amount') > $amountForCongreUseThen)
 				)
 		 {
+			$this->session->set_flashdata('captureTransError', 'Posting Error');
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "Expense Amount ".$this->input->post('amount')." Is Greater Than Amount In  Cash Box For Congregation Use");
 			$this->session->set_flashdata('navPillSelect', 'capture-trans');
@@ -298,6 +301,7 @@ class JwAccounting extends MY_Controller {
 		 }
 		 else if($tc_details->transaction_code == 'DO' && $this->input->post('account')  != 1)
 		 {
+			$this->session->set_flashdata('captureTransError', 'Posting Error');
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "You Cannot Deposit from This Account");
 			$this->session->set_flashdata('navPillSelect', 'capture-trans');
@@ -307,6 +311,7 @@ class JwAccounting extends MY_Controller {
 		 else if(($tc_details->transaction_code == 'FRXWO' || $tc_details->transaction_code == 'FRXCO' || $tc_details->transaction_code == 'FRXWI' || $tc_details->transaction_code == 'FRXCI') 
 		 		 && $this->input->post('account')  != 2)
 		 {
+			$this->session->set_flashdata('captureTransError', 'Posting Error');
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "You Cannot Exchange Currency In This Account");
 			$this->session->set_flashdata('navPillSelect', 'capture-trans');
@@ -315,6 +320,7 @@ class JwAccounting extends MY_Controller {
 		 }
 		 else if($tc_details->transaction_code == 'DI' && ($this->input->post('account')  == 1 || $this->input->post('account')  == 3 ))
 		 {
+			$this->session->set_flashdata('captureTransError', 'Posting Error');
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "You Cannot Deposit Into This Account");
 			$this->session->set_flashdata('navPillSelect', 'capture-trans');
@@ -326,6 +332,7 @@ class JwAccounting extends MY_Controller {
 				 	|| $this->input->post('amount') > $acc_runningNet[$this->input->post('account')])
 				 )
 		 {
+			$this->session->set_flashdata('captureTransError', 'Posting Error');
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('errorDesc', "Outbound Amount ".$this->input->post('amount')." Is Greater Than Amount In Account");
 			$this->session->set_flashdata('navPillSelect', 'capture-trans');
@@ -363,8 +370,78 @@ class JwAccounting extends MY_Controller {
 		
 	  }
 
+	public function delete_Transaction($date, $tc, $createdate, $ledgerID)
+	{
+		$createdate = rawurldecode($createdate);
+
+		$ledgerRowDet = $this->Public_Model->get_data_record('tbl_ledger_s_26', " tbl_ledger_S_26_id = {$ledgerID}", null, null, '*');
+
+		if($tc == 6 || $tc == 12 || $tc == 14)
+		{
+			$this->Public_Model->delete('tbl_ledger_s_26', 'tbl_ledger_S_26_id', $ledgerID);
+			$this->session->set_flashdata('userSuccess', 'Delete Successfull');
+         	redirect('JwAccounting');
+		}
+		else if($tc == 9)
+		{
+			$checkNegBalance = $this->Public_Model->get_data_all('vw_running_analysis_acc', " period_id = ".$ledgerRowDet->period_id
+																	." AND currency_id = ".$ledgerRowDet->currency_id
+																	." AND ( trans_day > {$date} OR (trans_day = {$date} AND createdate >= '$createdate') )"
+																	." AND running_prim_net - '".$ledgerRowDet->amount."' < 0 "
+																	, null, null, '*, running_prim_net -\''.$ledgerRowDet->amount.'\' AS money_post_del');
+
+			if(isset($checkNegBalance[0]->trans_day))
+			{
+				$this->session->set_flashdata('userError', 'Delete Error');
+				$this->session->set_flashdata('errorDesc', 'Deletion Will Cause Irregularities');
+				$this->session->set_flashdata('error-ledger-s26', 'Deletion Will Cause Irregularities ');
+				redirect('JwAccounting');
+			}
+			else
+			{
+				$this->Public_Model->delete('tbl_ledger_s_26', 'tbl_ledger_S_26_id', $ledgerID);
+				$this->Public_Model->delete('tbl_ledger_s_26', 'tbl_ledger_S_26_id', $ledgerID+1);
+				$this->session->set_flashdata('userSuccess', 'Delete Successfull');
+         		redirect('JwAccounting');
+			}
+		}
+		else if($tc == 1 || $tc == 2 || $tc == 11 || $tc == 13)
+		{
+			if($ledgerRowDet->account_id == 1)
+			{
+				$accountSelectType = 'running_rec_net';
+			}
+			else if($ledgerRowDet->account_id == 2)
+			{
+				$accountSelectType = 'running_prim_net';
+			} 
+			 
+			$checkNegBalance = $this->Public_Model->get_data_all('vw_running_analysis_acc', " period_id = ".$ledgerRowDet->period_id
+																	." AND currency_id = ".$ledgerRowDet->currency_id
+																	." AND ( trans_day > {$date} OR (trans_day = {$date} AND createdate >= '$createdate') )"
+																	." AND {$accountSelectType} - '".$ledgerRowDet->amount."' < 0 "
+																	, null, null, "*, {$accountSelectType} - '".$ledgerRowDet->amount."' AS money_post_del");
+
+			if(isset($checkNegBalance[0]->trans_day))
+			{
+				$this->session->set_flashdata('userError', 'Delete Error');
+				$this->session->set_flashdata('errorDesc', 'Deletion Will Cause Irregularities');
+				$this->session->set_flashdata('error-ledger-s26', 'Deletion Will Cause Irregularities ');
+				redirect('JwAccounting');
+			}
+			else
+			{
+				$this->Public_Model->delete('tbl_ledger_s_26', 'tbl_ledger_S_26_id', $ledgerID);
+				$this->session->set_flashdata('userSuccess', 'Delete Successfull');
+         		redirect('JwAccounting');
+			}
+		}
+
+		
+	}
+	  
 	
-	  public function processTO62(){
+	public function processTO62(){
 		$amount = 0.00;
 		$this->load->library('form_validation');
 
@@ -400,8 +477,10 @@ class JwAccounting extends MY_Controller {
    }
    
    else
-   {
+   {	
 
+		$size_running_analysis_acc = 0;
+		
 		$acc_runningNet[2] = 0.00;
 
 		$sortby[] =  array('field'=>'trans_day'
@@ -414,6 +493,12 @@ class JwAccounting extends MY_Controller {
 																		 AND currency_id = ".$_SESSION['default_currency']->currency_id
 																	 ." AND trans_day <= DAY('".$this->input->post('transdate')."')"
 																 		, $sortby, null, '*');
+
+		
+		if(isset($vw_running_analysis_acc[0]->trans_day))
+		{
+			$size_running_analysis_acc = sizeof($vw_running_analysis_acc);
+		}
 		
 		if(isset($vw_running_analysis_acc[0]->trans_day))
 		{
@@ -442,8 +527,7 @@ class JwAccounting extends MY_Controller {
 			// Handle recordOfFundTransfer
 			$this->handleRecordOfFundTransfer($this->input, $to62ReferenceID);
 
-			// Handle amountToS26
-			$this->handleAmountToS26($this->input, $to62ReferenceID);
+			
 
 			$ledegerS26 = $this->Public_Model->get_data_record('tbl_ledger_s_26', " period_id = ".$period_details->tbl_period_id
 															    ." AND transaction_code_id  = 10 "

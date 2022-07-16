@@ -1,8 +1,10 @@
 <div class="row">
 <!-- Earnings (Monthly) Card Example -->
-<?php foreach($vw_error_warning as $error_each) { 
-	    if(isset($error_each->type))
+<?php 
+	if(isset($vw_error_warning[0]->type))
 		{
+	foreach($vw_error_warning as $error_each) 
+			{ 	    
 ?>
 <div class="col-lg-6 col-md-6 mb-4">
     <div class="card <?= ($error_each->type == 'Error')?'border-left-danger':'border-left-warning' ?> shadow h-100 py-2">

@@ -34,10 +34,11 @@ class ClosingPeriod extends MY_Controller {
 
 		$vw_error_warning = $this->Public_Model->get_data_all('vw_error_warning', " 1 = 1 ", 'type', null, '*');
 
-		foreach($vw_error_warning as $errorEach)
-		{
-			if(isset($errorEach->type))
+		if(isset($vw_error_warning[0]->type))
 			{
+			foreach($vw_error_warning as $errorEach)
+			{
+			
 				if($errorEach->type == 'Error')
 				{
 					$countErrors++;
@@ -72,7 +73,7 @@ class ClosingPeriod extends MY_Controller {
 
 			$periodNext = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 															    , 'DATE_ADD(startdate, INTERVAL 1 month ) AS startdate,
-																DATE_ADD(enddate, INTERVAL 1 MONTH ) AS enddate,
+																LAST_DAY(DATE_ADD(enddate, INTERVAL 1 MONTH )) AS enddate,
 																CONCAT(YEAR(DATE_ADD(startdate, INTERVAL 1 MONTH )),LPAD(MONTH(DATE_ADD(startdate, INTERVAL 1 MONTH )),2,0)) AS sequenceno,
 																YEAR(DATE_ADD(startdate, INTERVAL 1 month )) AS  year,
 																MONTH(DATE_ADD(startdate, INTERVAL 1 month )) AS  mon,
