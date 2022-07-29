@@ -241,7 +241,7 @@ require_once('webroot.php');
 			{		
 				if($r == 0)
 				{	
-					if($row[0] != 52 && $row[9] != 10)
+					if($row[0] != 52 && $row[2] != 'CTBSUP')
 					{
 						$row[7] = '<a onClick="deleteTransanction('.$row[0].','.$row[9].', \''.$row[7].'\',\''.$row[8].'\')" class=" d-sm-inline-block btn btn-sm btn-warning shadow-sm"><i
 										class="fas fa-trash fa-sm text-white-50"></i></a>';

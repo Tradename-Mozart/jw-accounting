@@ -144,6 +144,7 @@
             </div>
             <div id="process-TO62" class="container tab-pane <?php echo ($navPillSelect == 'process-TO62'?"active":"fade"); ?>"><br>
             <?php $dataForTO62['to_62Det'] = $vw_to_62;
+                  $dataForTO62['to62Ref'] = $to62Ref;
                   $this->load->view('to-62', $dataForTO62); 
             ?>
             </div>

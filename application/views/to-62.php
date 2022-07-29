@@ -17,27 +17,27 @@
 							<div class="col-sm-6 form-group  <?php echo (form_error('transdate')?"form-group has-warning":""); ?>">
 								<label>Date Of Transanction <span class="fas fa-calendar"></span></label>
 								<input placeholder="dd/mm/yyyy" class="form-control" type="date" name="transdate"
-                                value="<?php echo set_value('transdate'); ?>" 
+                                value="<?= (set_value('transdate'))?set_value('transdate'):(isset($to62Ref->transfer_date_form)?$to62Ref->transfer_date_form:NULL) ?>" 
                                 id="<?php echo (form_error('transdate')?"inputError":""); ?>" required>
 							</div>
 							<div class="col-sm-6 form-group <?php echo (form_error('transMethod')?"form-group has-warning":""); ?>">
 								<label>Transfer Method</label>
                                 <select class="form-control" name='transMethod' id="<?php echo (form_error('transMethod')?"inputError":""); ?>">
                                 
-                                <?php echo (set_value('transMethod') == 'select...') ? '<option value="0" selected>' : '<option value="0">';?>
+                                <?php echo ((set_value('transMethod')?set_value('transMethod'):(isset($to62Ref->transfer_method)?$to62Ref->transfer_method:NULL)) == 'select...') ? '<option value="0" selected>' : '<option value="0">';?>
                                 select...</option>
-								<?php echo (set_value('transMethod') == 'AT') ? '<option value="AT" selected>' : '<option value="AT">';?>
+								<?php echo ((set_value('transMethod')?set_value('transMethod'):(isset($to62Ref->transfer_method)?$to62Ref->transfer_method:NULL)) == 'AT') ? '<option value="AT" selected>' : '<option value="AT">';?>
                                 Automatic Transfer</option>
-								<?php echo (set_value('transMethod') == 'ET_DDBA') ? '<option value="ET_DDBA" selected>' : '<option value="ET_DDBA">';?>
+								<?php echo ((set_value('transMethod')?set_value('transMethod'):(isset($to62Ref->transfer_method)?$to62Ref->transfer_method:NULL)) == 'ET_DDBA') ? '<option value="ET_DDBA" selected>' : '<option value="ET_DDBA">';?>
                                 Electronic Transfer or Deposit to a Branch BankAccount</option>
-								<?php echo (set_value('transMethod') == 'C_MO') ? '<option value="C_MO" selected>' : '<option value="C_MO">';?>
+								<?php echo ((set_value('transMethod')?set_value('transMethod'):(isset($to62Ref->transfer_method)?$to62Ref->transfer_method:NULL)) == 'C_MO') ? '<option value="C_MO" selected>' : '<option value="C_MO">';?>
                                 Check orMoney Order</option>                                                             
                                 </select>
 							</div>
                             <div class="col-sm-12 form-group <?php echo (form_error('refno')?"form-group has-warning":""); ?>">
 								<label>Transanction Reference Number</label>
 								<input placeholder="Enter Reference Number Here..." class="form-control" type="text" name="refno"
-                                value="<?php echo set_value('refno'); ?>"
+                                value="<?= (set_value('refno'))?(set_value('refno')):(isset($to62Ref->referrence_no)?$to62Ref->referrence_no:NULL); ?>"
                                 id="<?php echo (form_error('refno')?"inputError":""); ?>" >
 							</div>
 

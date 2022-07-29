@@ -130,6 +130,10 @@ class JwAccounting extends MY_Controller {
 															   " AND period_status = 'Open'  ", null, null
 																, '*');
 
+		$to62Ref = $this->Public_Model->get_data_record('tbl_to_62_reference', " period_id = ".$period_details->tbl_period_id
+														." AND currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1)
+														, null, null, '*, DATE_FORMAT(transer_date, "%Y-%m-%d") AS transfer_date_form');
+
 		$cashStand = $this->Public_Model->get_data_record('vw_cash_box_standing', " currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1).
 															   " AND status = 'Open'  ", null, null
 																, '*');
@@ -154,6 +158,7 @@ class JwAccounting extends MY_Controller {
 		$data['currency_details'] = $currency_details;
 		$data['account_details'] = $account_details;		
 		$data['vw_to_62'] = $vw_to_62;
+		$data['to62Ref'] = $to62Ref;
 
 		if($this->session->flashdata('navPillSelect'))
 		{
@@ -376,9 +381,16 @@ class JwAccounting extends MY_Controller {
 
 		$ledgerRowDet = $this->Public_Model->get_data_record('tbl_ledger_s_26', " tbl_ledger_S_26_id = {$ledgerID}", null, null, '*');
 
-		if($tc == 6 || $tc == 12 || $tc == 14)
+		if($tc == 6 || $tc == 12 || $tc == 14 || $tc == 10)
 		{
 			$this->Public_Model->delete('tbl_ledger_s_26', 'tbl_ledger_S_26_id', $ledgerID);
+
+			if($tc == 10)
+			{
+				$to62Ref = $this->Public_Model->get_data_record('tbl_to_62_reference', " period_id = ".$ledgerRowDet->period_id." AND currency_id = ".$ledgerRowDet->currency_id, null, null, '*');
+				$this->Public_Model->delete('tbl_record_funds_trans_to_62', 'to_62_reference', $to62Ref->tbl_to_62_reference_id);
+			}
+
 			$this->session->set_flashdata('userSuccess', 'Delete Successfull');
          	redirect('JwAccounting');
 		}
@@ -510,8 +522,9 @@ class JwAccounting extends MY_Controller {
 			$amount += $this->input->post('input'.$TO62_Each->tbl_to_62_trans_type_id);
 		}
 
+		//die($acc_runningNet[2]);
 
-		if($amount > $vw_cash_box_snap->primary_account_net || $amount > $acc_runningNet[2])
+		if($amount > $vw_cash_box_snap->amount_in_cash_box || $amount > $acc_runningNet[2])
 		{
 			$this->session->set_flashdata('userError', 'Posting Error');
 			$this->session->set_flashdata('navPillSelect', 'process-TO62');

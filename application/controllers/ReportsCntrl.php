@@ -232,7 +232,23 @@ class ReportsCntrl extends MY_Controller {
 
 		$data['900_1_CheckBox'] = 'Yes';
 		$data['900_3_Text'] = $congrDet->congregation_name;
-		$data['900_5_CheckBox'] = 'Yes';
+
+		if(isset($TO62_trans_Det->transfer_method))
+		{
+			if($TO62_trans_Det->transfer_method == 'AT')
+			{
+				$data['900_4_CheckBox'] = 'Yes';
+			}
+			else if($TO62_trans_Det->transfer_method == 'ET_DDBA')
+			{
+				$data['900_5_CheckBox'] = 'Yes';
+			}
+			else if($TO62_trans_Det->transfer_method == 'C_MO')
+			{
+				$data['900_6_CheckBox'] = 'Yes';
+			}
+		}
+		
 		
 		$data['901_1_TO62Donate'] = $TO62_data[0]->amount;
 		$data['901_2_TO62Donate'] = $TO62_data[1]->amount;
