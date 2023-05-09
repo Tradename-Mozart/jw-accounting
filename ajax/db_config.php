@@ -1,9 +1,9 @@
 <?php
 
 	$gaSql['user']       = "root";
-	$gaSql['password']   = "";
+	$gaSql['password']   = "R094652r@1234";
 	$gaSql['db']         = "jw_accounting";//"uhealthzim";
-	$gaSql['server']     = "localhost";
+	$gaSql['server']     = "localhost:3308";
 
 // Live Prod
 	/*$gaSql['user']       = "gxbglmir_root";

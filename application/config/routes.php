@@ -59,6 +59,7 @@ $route['forgot_access'] = 'JwAccounting/forgot';
 $route['post-transaction'] = 'JwAccounting/capture_Transaction';
 $route['delrec/(:any)/(:any)/(:any)/(:any)'] = 'JwAccounting/delete_Transaction/$1/$2/$3/$4';
 $route['post-to62'] = 'JwAccounting/processTO62';
+$route['switch-carry-Foward-ww'] = 'JwAccounting/switchCaryFwdWW';
 $route['switch-currency/(:any)'] = 'JwAccounting/defaultingCurrency/$1';
 $route['post-cash-box-standing'] = 'JwAccounting/processCashBoxStanding';
 

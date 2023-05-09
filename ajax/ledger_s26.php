@@ -44,7 +44,7 @@ require_once('webroot.php');
  
    $sJoin = "";
    $sWhere = "";
-   $sOrder = "Order By trans_day ASC, createdate ASC";
+   $sOrder = "Order By trans_day ASC, transaction_code_id ASC, createdate ASC";
  
    // Joins
    /*$sJoin = 'LEFT JOIN procedure_fee pf ON pf.proc_id = pd.id 

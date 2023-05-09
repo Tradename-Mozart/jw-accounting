@@ -137,6 +137,10 @@ class JwAccounting extends MY_Controller {
 		$cashStand = $this->Public_Model->get_data_record('vw_cash_box_standing', " currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1).
 															   " AND status = 'Open'  ", null, null
 																, '*');
+			
+		$mark_for_cary_fwrd_ww = $this->Public_Model->get_data_record('tbl_mark_for_cary_fwrd_ww', " period_id = ".$period_details->tbl_period_id." 
+																AND currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1)
+																 , null, null, '*');
 		
 		
 		
@@ -171,6 +175,8 @@ class JwAccounting extends MY_Controller {
 
 		$data['vw_to_62'] = $vw_to_62;
 		$data['cashStand'] = $cashStand;
+
+		$data['carryFwdWWTO62'] = (isset($mark_for_cary_fwrd_ww->state))?$mark_for_cary_fwrd_ww->state:'sent';
 
 		$this->loadpage('dashboard',$data);
 	}
@@ -375,7 +381,7 @@ class JwAccounting extends MY_Controller {
 		
 	  }
 
-	public function delete_Transaction($date, $tc, $createdate, $ledgerID)
+	public function delete_Transaction($date, $tc, $createdate, $ledgerID, $reqFromCoFunc = false)
 	{
 		$createdate = rawurldecode($createdate);
 
@@ -392,7 +398,15 @@ class JwAccounting extends MY_Controller {
 			}
 
 			$this->session->set_flashdata('userSuccess', 'Delete Successfull');
-         	redirect('JwAccounting');
+
+			if($reqFromCoFunc == false)
+			{
+				 redirect('JwAccounting');
+			}
+			else
+			{
+				return;
+			}
 		}
 		else if($tc == 9)
 		{
@@ -577,6 +591,85 @@ class JwAccounting extends MY_Controller {
 		
 	   
 	 }
+
+	function switchCaryFwdWW()
+	{
+
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
+																, '*');
+
+		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'open' 
+																AND currency_id = ".$_SESSION['default_currency']->currency_id
+												 				, null, null, '*');
+								
+		$mark_for_cary_fwrd_ww = $this->Public_Model->get_data_record('tbl_mark_for_cary_fwrd_ww', " period_id = ".$period_details->tbl_period_id." 
+																 AND currency_id = ".$_SESSION['default_currency']->currency_id
+																  , null, null, '*');
+
+		$wwBranchInLedger = $this->Public_Model->get_data_record('tbl_ledger_s_26', " transaction_code_id = 10 AND period_id = ".$period_details->tbl_period_id
+																 ." AND currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1)
+																 , null, null, '*');
+
+		if(isset($wwBranchInLedger->amount))
+		{
+			$this->delete_Transaction($wwBranchInLedger->transanction_date
+									  , 10, $wwBranchInLedger->createdate
+									  , $wwBranchInLedger->tbl_ledger_S_26_id, $reqFromCoFunc = true);
+									  
+			$this->session->set_flashdata('userSuccess', 'WW and Resolution will be Forwarded to the Following Month');
+			
+		}
+		else if(isset($mark_for_cary_fwrd_ww->state))
+		{
+			if( $mark_for_cary_fwrd_ww->state == 'fwd')
+			{
+				$this->session->set_flashdata('userSuccess', 'Toggle Successfull. You May Capture TO-62');
+			}
+						
+		}
+		
+
+		if($vw_cash_box_snap->ww_from_contri_box > 0 || isset($wwBranchInLedger->amount))
+		{
+			if(!isset($mark_for_cary_fwrd_ww->state))
+			{
+				$data = array( 
+					'period_id' => $period_details->tbl_period_id, 
+					'currency_id' => (isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1), 
+					'state' => 'fwd',
+					'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time())
+				 );
+
+				 $this->Public_Model->insert($data,'tbl_mark_for_cary_fwrd_ww');
+			}
+			else
+			{
+				$newState = '';
+
+				if($mark_for_cary_fwrd_ww->state == 'fwd')
+				{
+					$newState = 'sent';
+				}
+				else
+				{
+					$newState = 'fwd';
+				}
+
+				$data = array( 
+					'period_id' => $period_details->tbl_period_id, 
+					'currency_id' => (isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1), 
+					'state' => $newState,
+					'createdate' =>  mdate('%Y-%m-%d %h:%i:%s', time())
+				 );
+
+				 $this->Public_Model->update($data,"tbl_mark_for_cary_fwrd_ww_id",$mark_for_cary_fwrd_ww->tbl_mark_for_cary_fwrd_ww_id,"tbl_mark_for_cary_fwrd_ww" );
+			}
+
+			redirect('JwAccounting');			
+		}
+
+		
+	}
 
 	function handleTblTO62Reference($postData)
 	{

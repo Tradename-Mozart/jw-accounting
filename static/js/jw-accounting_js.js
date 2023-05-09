@@ -96,3 +96,10 @@ function populateDescription(desc)
 
 	//console.log(desc);
 }
+
+function switchCaryFwdWW()
+{
+	location.href = ci_base_url+'switch-carry-Foward-ww';
+
+	//console.log(desc);
+}
