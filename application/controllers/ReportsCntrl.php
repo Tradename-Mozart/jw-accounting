@@ -98,12 +98,12 @@ class ReportsCntrl extends MY_Controller {
 		$sortby[] =  array('field'=>'trans_day'
 							 , 'direction' => "asc");
 		
-		$sortby[] =  array('field'=>'createdate'
+		$sortby[] =  array('field'=>"CASE WHEN transaction_code_id = 10 AND transaction_code IS NULL THEN NOW() WHEN transaction_code_id = 10 AND transaction_code = 'CTBSUP' THEN DATE_ADD(NOW(), INTERVAL 1 SECOND) ELSE  `createdate` END"
 							 , 'direction' => "asc");
 
 		$vw_s26_data = $this->Public_Model->get_data_all('vw_s26_data', " currency_id = ".$_SESSION['default_currency']->currency_id
 															   ." AND period_id = {$periodID}", $sortby, null
-																, '*');
+																, '*',NULL, NULL, NULL, false);
 		
 		$data[$s26CAMapping['3']] = $congrDet->congregation_name;
 		$data[$s26CAMapping['27']] = $congrDet->city;

@@ -72,12 +72,30 @@ class MY_Controller extends CI_Controller {
 	
 	
 	public function loadpage($pagename, $data = NULL){
+
+		$openingWW = 0.00;
+
+		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
+																, '*');
 		  
 		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'open' 
 																				AND currency_id = ".$_SESSION['default_currency']->currency_id
 																 , null, null, '*');
+								
+		$prevClosingDet = $this->Public_Model->get_data_record('tbl_closing_details', " period_id = ".$period_details->previouse_period_id." 
+																 AND currency_id = ".$_SESSION['default_currency']->currency_id
+																 , null, null, '*');
+										
+		$wwBranchInLedger = $this->Public_Model->get_data_record('tbl_ledger_s_26', " transaction_code_id = 10 AND period_id = ".$period_details->tbl_period_id
+																 ." AND currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1)
+																 , null, null, '*');
+
+		$openingWW = (!isset($wwBranchInLedger->amount))?$prevClosingDet->ww_cary_fwd:$openingWW;
+		
+		
 		
 		$data['vw_cash_box_snap'] = $vw_cash_box_snap;
+		$data['openingWW'] = $openingWW;
 		 
 		 $this->load->view('parts/html_header', $data);
 		 $this->load->view('parts/navigation_side_bar');

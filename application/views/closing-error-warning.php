@@ -47,27 +47,6 @@
 				<?php echo form_open_multipart('process-close-period', array('role' => 'form')); ?>
 					<div class="col-sm-12">
 						<div class="row">
-							
-						<?php 
-							if(isset($vw_error_warning[0]->type))
-								{
-							foreach($vw_error_warning as $error_each) 
-									{ 
-									if($error_each->heading == 'TO-62 Error')
-									{	    
-						?>
-						<div class="col-sm-12 form-group <?php echo (form_error('confirm_det')?"form-group has-warning":""); ?>">
-                                            <label>Carry Forward  WW Contribution</label>
-                                            <label class="checkbox-inline">
-                                                <input type="checkbox" name="confirm_det" value="s1" id="<?php echo (form_error('confirm_det')?"inputError":""); ?>">
-                                            </label>
-                            </div>
-
-							<?php
-									}
-									}
-								}
-							?>
 
 							<div class="col-sm-12 form-group <?php echo (form_error('confirm_det')?"form-group has-warning":""); ?>">
                                             <label>Confirm Closure Of Period</label>

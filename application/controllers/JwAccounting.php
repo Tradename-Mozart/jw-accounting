@@ -113,7 +113,7 @@ class JwAccounting extends MY_Controller {
 																		, '*');
 
 		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
-																, '*');
+																, "*, DATE_FORMAT(enddate, '%Y-%m-%d') AS lastDayClnder");
 		
 		$tc_details = $this->Public_Model->get_data_all('tbl_transaction_code', " type <> 'IO' and tbl_transaction_code_id <> 8 ", null, null
 																, '*');		
@@ -177,6 +177,7 @@ class JwAccounting extends MY_Controller {
 		$data['cashStand'] = $cashStand;
 
 		$data['carryFwdWWTO62'] = (isset($mark_for_cary_fwrd_ww->state))?$mark_for_cary_fwrd_ww->state:'sent';
+		$data['lastDayClnder'] = $period_details->lastDayClnder;
 
 		$this->loadpage('dashboard',$data);
 	}
@@ -242,12 +243,22 @@ class JwAccounting extends MY_Controller {
 		$acc_runningNet[2] = 0.00;
 		$acc_runningNet[3] = 0.00;
 		$amountForCongreUseThen = 0.00;
+		$openingWW = 0.00;
 
 		$period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
 																, '*');
 
 		$tc_details = $this->Public_Model->get_data_record('tbl_transaction_code', " tbl_transaction_code_id = ".$this->input->post('tc')
 															, null, null, '*');
+
+		$prevClosingDet = $this->Public_Model->get_data_record('tbl_closing_details', " period_id = ".$period_details->previouse_period_id." 
+																AND currency_id = ".$_SESSION['default_currency']->currency_id
+																, null, null, '*');
+		
+		if(isset($prevClosingDet->ww_cary_fwd))
+		{
+			$openingWW = $prevClosingDet->ww_cary_fwd;
+		}
 		
 		$vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'Open' 
 																				AND currency_id = ".$_SESSION['default_currency']->currency_id
@@ -299,7 +310,7 @@ class JwAccounting extends MY_Controller {
 			return;
 		 }
 		 else if($tc_details->transaction_code == 'E' && $this->input->post('account') == 2
-		 		&& ($this->input->post('amount') > $vw_cash_box_snap->amount_in_cash_box_less_ww
+		 		&& ($this->input->post('amount') > $vw_cash_box_snap->amount_in_cash_box_less_ww - $openingWW
 					|| $this->input->post('amount') > $amountForCongreUseThen)
 				)
 		 {
@@ -339,8 +350,8 @@ class JwAccounting extends MY_Controller {
 			return;
 		 }
 		 else if($tc_details->type == 'O' && $tc_details->transaction_code != 'E'
-		 		  && ( $this->input->post('amount') > $vw_account_standing_p2p->account_net_amount
-				 	|| $this->input->post('amount') > $acc_runningNet[$this->input->post('account')])
+		 		  && ( $this->input->post('amount') > $vw_account_standing_p2p->account_net_amount + $openingWW
+				 	|| $this->input->post('amount') > (($this->input->post('account') == 2)?($acc_runningNet[$this->input->post('account')]+$openingWW):$acc_runningNet[$this->input->post('account')]))
 				 )
 		 {
 			$this->session->set_flashdata('captureTransError', 'Posting Error');
@@ -352,7 +363,8 @@ class JwAccounting extends MY_Controller {
 		 }
 
 		 // EOF Handle Expenses and Amount Outflows
-		 if($this->input->post('amount') > 0)
+		 if($this->input->post('amount') > 0 
+		 	|| ($this->input->post('tc') == 6 && $this->input->post('amount') <> 0))
 		 {
 		 	$this->post_ID = $this->Public_Model->insert_and_return_key($data,'tbl_ledger_s_26');
 
@@ -616,7 +628,7 @@ class JwAccounting extends MY_Controller {
 									  , 10, $wwBranchInLedger->createdate
 									  , $wwBranchInLedger->tbl_ledger_S_26_id, $reqFromCoFunc = true);
 									  
-			$this->session->set_flashdata('userSuccess', 'WW and Resolution will be Forwarded to the Following Month');
+			$this->session->set_flashdata('userSuccess', 'Toggle Successfull. WW and Resolution will be Forwarded to the Following Month');
 			
 		}
 		else if(isset($mark_for_cary_fwrd_ww->state))
@@ -624,6 +636,10 @@ class JwAccounting extends MY_Controller {
 			if( $mark_for_cary_fwrd_ww->state == 'fwd')
 			{
 				$this->session->set_flashdata('userSuccess', 'Toggle Successfull. You May Capture TO-62');
+			}
+			else
+			{
+				$this->session->set_flashdata('userSuccess', 'Toggle Successfull. WW and Resolution will be Forwarded to the Following Month');
 			}
 						
 		}
@@ -665,9 +681,10 @@ class JwAccounting extends MY_Controller {
 				 $this->Public_Model->update($data,"tbl_mark_for_cary_fwrd_ww_id",$mark_for_cary_fwrd_ww->tbl_mark_for_cary_fwrd_ww_id,"tbl_mark_for_cary_fwrd_ww" );
 			}
 
-			redirect('JwAccounting');			
+						
 		}
 
+		redirect('JwAccounting');
 		
 	}
 

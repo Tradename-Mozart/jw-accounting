@@ -24,7 +24,7 @@
 								<label>Date Of Transanction <span class="fas fa-calendar"></span></label>
 								<input placeholder="dd/mm/yyyy" class="form-control" type="date" name="transdate"
                                 value="<?= (set_value('transdate'))?set_value('transdate'):(isset($to62Ref->transfer_date_form)?$to62Ref->transfer_date_form:NULL) ?>" 
-                                id="<?php echo (form_error('transdate')?"inputError":""); ?>" required <?= ($carryFwdWWTO62 =='fwd')?'disabled':'' ?>>
+                                id="<?php echo (form_error('transdate')?"inputError":""); ?>" max='<?=$lastDayClnder ?>' required <?= ($carryFwdWWTO62 =='fwd')?'disabled':'' ?>>
 							</div>
 							<div class="col-sm-6 form-group <?php echo (form_error('transMethod')?"form-group has-warning":""); ?>">
 								<label>Transfer Method</label>

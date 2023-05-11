@@ -99,6 +99,45 @@ class ClosingPeriod extends MY_Controller {
 
 			 $this->Public_Model->insert($data,'tbl_acc_closing_det');
 
+			 // process closing ww if applicable
+
+			 $openingWW = 0.00;
+
+			 $period_details = $this->Public_Model->get_data_record('tbl_period', " status = 'Open' ", null, null
+																, '*');
+
+			 $mark_for_cary_fwrd_ww = $this->Public_Model->get_data_record('tbl_mark_for_cary_fwrd_ww', " period_id = ".$eachClosing->tbl_period_id." 
+																 AND currency_id = ".$eachClosing->currency_id
+																  , null, null, '*');
+
+			 $prevClosingDet = $this->Public_Model->get_data_record('tbl_closing_details', " period_id = ".$period_details->previouse_period_id." 
+																  AND currency_id = ".$eachClosing->currency_id
+																  , null, null, '*');
+
+			 $vw_cash_box_snap = $this->Public_Model->get_data_record('vw_cash_box_snap', " status = 'open' 
+																  AND currency_id = ".$eachClosing->currency_id
+												   				  , null, null, '*');
+
+			$currClosingDet = $this->Public_Model->get_data_record('tbl_closing_details', " period_id = ".$period_details->tbl_period_id." 
+																	 AND currency_id = ".$eachClosing->currency_id
+																	 , null, null, '*');
+
+			 if(isset($mark_for_cary_fwrd_ww->state))
+			 {
+				if($mark_for_cary_fwrd_ww->state == 'fwd')
+				{
+					$openingWW = $vw_cash_box_snap->ww_from_contri_box + $prevClosingDet->ww_cary_fwd;
+				}
+			 }
+
+			 $data = array( 
+				'ww_cary_fwd' => $openingWW
+				);
+		
+				$this->Public_Model->update($data,"tbl_closing_details_id",$currClosingDet->tbl_closing_details_id,"tbl_closing_details" );
+
+			 // EOF process closing ww if applicable
+
 		}
 
 		

@@ -91,7 +91,7 @@ class Public_model extends CI_Model
 	
 	
 	public function get_data_all($table, $where, $orderbyid=null, $orderbytype=null, $selectCustom = null
-								 ,$limit_num_rows = NULL, $limit_start= NULL, $join =NULL)
+								 ,$limit_num_rows = NULL, $limit_start= NULL, $join =NULL, $escapeOnJoin = null)
 	{
 		if(!empty($selectCustom))
 			$this->db->select($selectCustom);
@@ -120,7 +120,7 @@ class Public_model extends CI_Model
 		{
 			foreach($orderbyid as $orderSingle)
 			{
-				$this->db->order_by($orderSingle['field'], $orderSingle['direction']);
+				$this->db->order_by($orderSingle['field'], $orderSingle['direction'], $escapeOnJoin);
 			}
 		}
 		

@@ -44,8 +44,11 @@ require_once('webroot.php');
  
    $sJoin = "";
    $sWhere = "";
-   $sOrder = "Order By trans_day ASC, transaction_code_id ASC, createdate ASC";
- 
+   // original sort order
+   // $sOrder = "Order By trans_day ASC, CASE transaction_code_id WHEN 6 THEN 9.5 ELSE transaction_code_id END ASC, createdate ASC";
+   $sOrder = "Order By trans_day ASC, createdate ASC, CASE transaction_code_id WHEN 6 THEN 9.5 ELSE transaction_code_id END ASC";
+
+   
    // Joins
    /*$sJoin = 'LEFT JOIN procedure_fee pf ON pf.proc_id = pd.id 
    			 LEFT JOIN procedure_category pc ON pc.cat_id = pd.pro_category_id';*/

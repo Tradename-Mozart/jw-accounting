@@ -56,7 +56,7 @@
                                     </div>
                                     <div>
                                         <div class="small text-success">Cash For World Wide Conributions</div>
-                                        <?= $vw_cash_box_snap->ww_from_contri_box?>
+                                        <?= $vw_cash_box_snap->ww_from_contri_box + $openingWW?>
                                     </div>
                                 </a>
                                 <a class="dropdown-item d-flex align-items-center" href="#">
@@ -67,7 +67,7 @@
                                     </div>
                                     <div>
                                         <div class="small text-success">Cash For Congregation Usage</div>
-                                        <?= $vw_cash_box_snap->amount_in_cash_box_less_ww?>
+                                        <?= $vw_cash_box_snap->amount_in_cash_box_less_ww - $openingWW?>
                                     </div>
                                 </a>
                                 <a class="dropdown-item d-flex align-items-center" href="#">
@@ -78,7 +78,7 @@
                                     </div>
                                     <div>
                                         <div class="small text-success">Cash For Congregation Usage Less Mon Resol</div>
-                                        <?= $vw_cash_box_snap->amount_for_congr_use_less_reslov?>
+                                        <?= $vw_cash_box_snap->amount_for_congr_use_less_reslov - $openingWW?>
                                     </div>
                                 </a>
                                 <!--a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a-->
