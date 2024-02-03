@@ -95,7 +95,7 @@
     <script src="<?= base_url(); ?>static/vendor/datatables/jszip.min.js"></script>
     <script src="<?= base_url(); ?>static/vendor/datatables/pdfmake.min.js"></script>
     <script src="<?= base_url(); ?>static/vendor/datatables/vfs_fonts.js"></script>
-    <script src="<?= base_url(); ?>static/js/jw-accounting_ajax.js"></script>
+    <script src="<?= base_url(); ?>static/js/jw-accounting_ajax.js?v=2"></script>
     <script src="<?= base_url(); ?>static/js/jw-accounting_js.js"></script>
 	
 	<script type="text/javascript">

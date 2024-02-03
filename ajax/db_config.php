@@ -3,7 +3,7 @@
 	$gaSql['user']       = "root";
 	$gaSql['password']   = "R094652r@1234";
 	$gaSql['db']         = "jw_accounting";//"uhealthzim";
-	$gaSql['server']     = "localhost:3308";
+	$gaSql['server']     = "localhost:3306";
 
 // Live Prod
 	/*$gaSql['user']       = "gxbglmir_root";

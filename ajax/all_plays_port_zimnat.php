@@ -16,33 +16,46 @@ require_once('webroot.php');
 	 * you want to insert a non-database field (for example a counter or static image)
 	 */
 	 
-	
-	
-	$period_id = $_GET['period_id'];
-	$currency_id = $_GET['currency_id'];
-	
-	
+	$hascontact = $_GET['hascontact'];
 
-  $aColumns = array(
-	'sequenceno',
-    'tbl_period_id',
-    'tbl_period_id',
-    'tbl_period_id' 
-  );
+	//$isVendorBuyer = 1;
+	 
+	$aColumns = array(
+	   'createdate',
+       'email_phone',
+       'points_gained',
+       'move_limit',
+  	 );
+
+	   $ColumnsForQuery = array(
+		'createdate',
+		'email_phone',
+		'points_gained',
+		'move_limit',
+		);
+
+	// $aColumns = array(
+	// 	'tbl_user_id',
+    //    'uni_user_id',
+    //    'user_status',
+  	//  );
     
    /* Indexed column (used for fast and accurate table cardinality) */
-   $sIndexColumn = "tbl_period_id";
+   $sIndexColumn = "tbl_gm_spp.createdate";
+
+   //$sIndexColumn = "tbl_user_id";
  
    /* DB table to use */
-   $sTable = "tbl_period AS tp";
+   $sTable = "tbl_gm_sld_pzl_pzl AS tbl_gm_spp";
+
+   //$sTable = "tbl_user";
  
    $sJoin = "";
    $sWhere = "";
    $sOrder = "";
  
    // Joins
-   /*$sJoin = 'LEFT JOIN procedure_fee pf ON pf.proc_id = pd.id 
-   			 LEFT JOIN procedure_category pc ON pc.cat_id = pd.pro_category_id';*/
+   $sJoin = '';
     
    // get the database credentials from the configfile
    
@@ -65,6 +78,8 @@ require_once('webroot.php');
 	
 	
 	$gaSql['link'] = select_db($gaSql);
+
+	
 	
 	/* 
 	 * Paging
@@ -82,20 +97,34 @@ require_once('webroot.php');
 	 */
 	if ( isset( $_GET['iSortCol_0'] ) )
 	{
-		if($sOrder == "")
-		{
-			$sOrder = "ORDER BY  ";
-		}
-		else
-		{
-			$sOrder .= ", ";
-		}
+		$sOrder = "ORDER BY  ";
 		for ( $i=0 ; $i<intval( $_GET['iSortingCols'] ) ; $i++ )
 		{
 			if ( $_GET[ 'bSortable_'.intval($_GET['iSortCol_'.$i]) ] == "true" )
 			{
-				$sOrder .= $aColumns[ intval( $_GET['iSortCol_'.$i] ) ]."
+				//echo 'to sort '.$aColumns[ intval( $_GET['iSortCol_'.$i] ) ].'  |  '.mysqli_real_escape_string( $gaSql['link'], $_GET['sSortDir_'.$i] ).'<br/>';
+				//handle nulls here
+				if($aColumns[ intval( $_GET['iSortCol_'.$i] ) ] == 'points_gained'
+					|| $aColumns[ intval( $_GET['iSortCol_'.$i] ) ] == 'running_score'
+					|| $aColumns[ intval( $_GET['iSortCol_'.$i] ) ] == 'highest_score'
+					|| $aColumns[ intval( $_GET['iSortCol_'.$i] ) ] == 'current_dense_rank')
+				{
+					
+					if(mysqli_real_escape_string( $gaSql['link'], $_GET['sSortDir_'.$i] ) == 'asc')
+					{
+						$sOrder .= "-".$aColumns[ intval( $_GET['iSortCol_'.$i] ) ]." desc, ";
+					}
+					else if(mysqli_real_escape_string( $gaSql['link'], $_GET['sSortDir_'.$i] ) == 'desc')
+					{
+						$sOrder .= "-COALESCE(".$aColumns[ intval( $_GET['iSortCol_'.$i] ) ].", -2) asc, ";
+					}
+				}
+				else
+				{
+					$sOrder .= $aColumns[ intval( $_GET['iSortCol_'.$i] ) ]."
 				 	".mysqli_real_escape_string( $gaSql['link'], $_GET['sSortDir_'.$i] ) .", ";
+				}
+				
 			}
 		}
 		
@@ -148,14 +177,11 @@ require_once('webroot.php');
 	}
 	
 	
-	/*if($sWhere == "")
+	
+	if($sOrder == "")
 	{
-		$sWhere .= "WHERE  period_id = {$period_id} AND currency_id = {$currency_id}";
+		$sOrder = 'ORDER BY -current_dense_rank desc';
 	}
-	else
-	{
-		$sWhere .= " And (period_id = {$period_id}) AND currency_id = {$currency_id}";
-	}*/
 	
 	/*
 	 * SQL queries
@@ -163,24 +189,31 @@ require_once('webroot.php');
 	 */
 
 
-	/*if($sOrder == "")
+	if($sWhere == "")
 	{
-		$sOrder = "Order By trans_day ASC, createdate ASC";
-		
-	}*/
+		$sWhere = " WHERE prospect = 'zimnat' AND createdate > '20220420'  ";
+	}
+	else
+	{
+		$sWhere .= " AND  prospect = 'zimnat' AND createdate > '20220420' AND email_phone <> '0710000000' ";
+	}
+
+	if($hascontact == 1)
+	{
+		$sWhere .= " AND  (email_phone IS NOT NULL OR email_phone != '') ";
+	}
 
 	$sQuery = "
-		SELECT DISTINCT SQL_CALC_FOUND_ROWS ".str_replace(" , ", " ", implode(", ", $aColumns))."
+		SELECT DISTINCT SQL_CALC_FOUND_ROWS ".str_replace(" , ", " ", implode(", ", $ColumnsForQuery))."
 		FROM   $sTable
 		$sJoin 
 		$sWhere
 		$sOrder
-		$sLimit
-	";
+		$sLimit;";
 	
 	//echo $sQuery."<br/><br/>";
 	
-	$rResult = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
+	$rResult = query($sQuery, $gaSql) or die(mysql_error());
 	
 
 	
@@ -190,7 +223,7 @@ require_once('webroot.php');
 	$sQuery = "
 		SELECT FOUND_ROWS()
 	";
-	$rResultFilterTotal = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
+	$rResultFilterTotal = query($sQuery, $gaSql) or die(mysql_error());
 	$aResultFilterTotal = mysqli_fetch_array($rResultFilterTotal);
 	$iFilteredTotal = $aResultFilterTotal[0];
 	
@@ -199,7 +232,7 @@ require_once('webroot.php');
 		SELECT COUNT(".$sIndexColumn.")
 		FROM   $sTable
 	";
-	$rResultTotal = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
+	$rResultTotal = query($sQuery, $gaSql) or die(mysql_error());
 	$aResultTotal = mysqli_fetch_array($rResultTotal);
 	$iTotal = $aResultTotal[0];
 	
@@ -231,21 +264,14 @@ require_once('webroot.php');
 			}
 		}
 		
-			foreach($row AS $r => $a)
-			{				
-				if($r == 0)
-				{	
-				$row[1] = '<a onClick="generateReport('.$row[1].', \'s26\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-				class="fas fa-download fa-sm text-white-50"></i> Generate S-26</a>';
+			// foreach($row AS $r => $a)
+			// {
+			// 	if($r == '1')
+			// 	{
+			// 		$row[1] = "<img class='product-image' src='{$WEB_ROOT}attachments/shop_images/" .$row[1]."' alt=''>";
+			// 	}
+			// }
 
-				$row[2] = '<a onClick="generateReport('.$row[2].', \'to62\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-				class="fas fa-download fa-sm text-white-50"></i> Generate TO-62</a>';
-
-				$row[3] = '<a onClick="generateReport('.$row[3].', \'s30\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-				class="fas fa-download fa-sm text-white-50"></i> Generate S-30</a>';
-				}
-							
-			}
 		$output['aaData'][] = $row;
 		
 	}

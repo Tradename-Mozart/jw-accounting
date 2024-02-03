@@ -90,7 +90,7 @@ class MY_Controller extends CI_Controller {
 																 ." AND currency_id = ".(isset($_SESSION['default_currency']->currency_id)?$_SESSION['default_currency']->currency_id:1)
 																 , null, null, '*');
 
-		$openingWW = (!isset($wwBranchInLedger->amount))?$prevClosingDet->ww_cary_fwd:$openingWW;
+		$openingWW = (!isset($wwBranchInLedger->amount))?(isset($prevClosingDet->ww_cary_fwd)?$prevClosingDet->ww_cary_fwd:$openingWW):$openingWW;
 		
 		
 		

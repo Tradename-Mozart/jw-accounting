@@ -50,7 +50,8 @@ $(document).ready(function () {
 		$('#period_reports').dataTable( {
 			"searching":false,
 			"lengthChange": false,
-			"pageLength": 50,
+			"pageLength": 10,
+			"order": [[ 0, 'desc' ]],
 			"sPaginationType": "full_numbers",
 			"bProcessing": true,
 			"bServerSide": true,

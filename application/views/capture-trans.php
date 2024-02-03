@@ -21,7 +21,7 @@
 								<label>Date Of Transanction <span class="fas fa-calendar"></span></label>
 								<input placeholder="dd/mm/yyyy" class="form-control" type="date" name="transdate"
                                 value="<?php echo set_value('transdate'); ?>" 
-                                id="<?php echo (form_error('transdate')?"inputError":""); ?>" max='<?=$lastDayClnder ?>' required>
+                                id="<?php echo (form_error('transdate')?"inputError":""); ?>" max="<?=$lastDayClnder ?>" required>
 							</div>
 							<div class="col-sm-6 form-group <?php echo (form_error('amount')?"form-group has-warning":""); ?>">
 								<label>Amount</label>

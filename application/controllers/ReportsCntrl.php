@@ -266,7 +266,7 @@ class ReportsCntrl extends MY_Controller {
 		$data['900_12_Text'] = isset($TO62_trans_Det->referrence_no)?$TO62_trans_Det->referrence_no:'';
 
 		$data['900_16_Text_C'] = 'T Marufu';
-		$data['900_17_Text_C'] = 'T Mandebvu';
+		$data['900_17_Text_C'] = 'C Kawurai';
 
 		$pdf = new GeneratePdf;
 		$response = $pdf->customGenerate($data, APPPATH.'libraries/fillpdf/TO-62_CA_Popu.pdf', FCPATH.'static/pdf_extract/', 'TO-62_CA_'.$periodDet->sequenceno.'_'.$_SESSION['default_currency']->currency.'.pdf');
@@ -324,6 +324,8 @@ class ReportsCntrl extends MY_Controller {
 		$data['901_1_S30BOM'] = (isset($vw_account_standing_rec->amount_closing_previouse)?$vw_account_standing_rec->amount_closing_previouse:0.00)
 									   +(isset($vw_account_standing_prim->amount_closing_previouse)?$vw_account_standing_prim->amount_closing_previouse:0.00);
 
+
+		$data['901_1_S30BOM_NoForm'] = $data['901_1_S30BOM'];
 		$data['901_1_S30BOM'] = number_format($data['901_1_S30BOM'], 2);
 
 		$data['901_2_S30CongRec'] = $ldgerS26CContrib->congre_contrib;
@@ -362,9 +364,11 @@ class ReportsCntrl extends MY_Controller {
 									 + (isset($TO62_data[0]->amount)?$TO62_data[0]->amount:0.00));
 
 		
+		$data['901_25_S30SurDef_NoForm'] = $data['901_25_S30SurDef'];
 		$data['901_25_S30SurDef'] = number_format($data['901_25_S30SurDef'],2);
-		$data['901_26_S30TotalEOM'] = number_format(($data['901_1_S30BOM'] + $data['901_25_S30SurDef']),2); 							 
-		$data['901_30_S30TotalFunds'] = $data['901_1_S30BOM'] + $data['901_25_S30SurDef'];
+		
+		$data['901_26_S30TotalEOM'] = number_format(($data['901_1_S30BOM_NoForm'] + $data['901_25_S30SurDef_NoForm']),2); 							 
+		$data['901_30_S30TotalFunds'] = $data['901_1_S30BOM_NoForm'] + $data['901_25_S30SurDef_NoForm'];
 		$data['901_30_S30TotalFunds'] = number_format($data['901_30_S30TotalFunds'],2);
 		$data['900_13_Text_C'] = 'Tatenda Marufu';
 

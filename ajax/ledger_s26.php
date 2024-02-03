@@ -189,7 +189,7 @@ require_once('webroot.php');
 	
 	//echo $sQuery."<br/><br/>";
 	
-	$rResult = query($sQuery, $gaSql) or die(mysql_error());
+	$rResult = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
 	
 
 	
@@ -199,7 +199,7 @@ require_once('webroot.php');
 	$sQuery = "
 		SELECT FOUND_ROWS()
 	";
-	$rResultFilterTotal = query($sQuery, $gaSql) or die(mysql_error());
+	$rResultFilterTotal = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
 	$aResultFilterTotal = mysqli_fetch_array($rResultFilterTotal);
 	$iFilteredTotal = $aResultFilterTotal[0];
 	
@@ -208,7 +208,7 @@ require_once('webroot.php');
 		SELECT COUNT(".$sIndexColumn.")
 		FROM   $sTable
 	";
-	$rResultTotal = query($sQuery, $gaSql) or die(mysql_error());
+	$rResultTotal = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
 	$aResultTotal = mysqli_fetch_array($rResultTotal);
 	$iTotal = $aResultTotal[0];
 	

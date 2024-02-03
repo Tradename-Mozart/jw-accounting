@@ -18,27 +18,29 @@ require_once('webroot.php');
 	 
 	
 	
-	$period_id = $_GET['period_id'];
-	$currency_id = $_GET['currency_id'];
+	$campaignListID = $_GET['campaignListID'];
 	
 	
 
   $aColumns = array(
-	'sequenceno',
-    'tbl_period_id',
-    'tbl_period_id',
-    'tbl_period_id' 
+	'campaign_enddate', 'tbl_gm_sld_campaign_id', 'selected_view'  
+  );
+
+  $aColumnsToSelect = array(
+	'CAST(tgsc.enddate AS date) AS campaign_enddate',
+	'tgsc.tbl_gm_sld_campaign_id',
+	"Case WHEN tbl_gm_sld_campaign_id = {$campaignListID} THEN 1 ELSE 0 END AS selected_view"    
   );
     
    /* Indexed column (used for fast and accurate table cardinality) */
-   $sIndexColumn = "tbl_period_id";
+   $sIndexColumn = "tbl_gm_sld_campaign_id";
  
    /* DB table to use */
-   $sTable = "tbl_period AS tp";
+   $sTable = "tbl_gm_sld_campaign AS tgsc";
  
    $sJoin = "";
    $sWhere = "";
-   $sOrder = "";
+   $sOrder = "Order By selected_view DESC, campaign_enddate DESC";
  
    // Joins
    /*$sJoin = 'LEFT JOIN procedure_fee pf ON pf.proc_id = pd.id 
@@ -150,11 +152,11 @@ require_once('webroot.php');
 	
 	/*if($sWhere == "")
 	{
-		$sWhere .= "WHERE  period_id = {$period_id} AND currency_id = {$currency_id}";
+		$sWhere .= "WHERE  vendor_id = {$vendor_id}";
 	}
 	else
 	{
-		$sWhere .= " And (period_id = {$period_id}) AND currency_id = {$currency_id}";
+		$sWhere .= " And (vendor_id = {$vendor_id})";
 	}*/
 	
 	/*
@@ -163,14 +165,14 @@ require_once('webroot.php');
 	 */
 
 
-	/*if($sOrder == "")
+	if($sOrder == "")
 	{
-		$sOrder = "Order By trans_day ASC, createdate ASC";
+		$sOrder = "ORDER BY selected_view DESC, campaign_enddate DESC";
 		
-	}*/
+	}
 
 	$sQuery = "
-		SELECT DISTINCT SQL_CALC_FOUND_ROWS ".str_replace(" , ", " ", implode(", ", $aColumns))."
+		SELECT DISTINCT SQL_CALC_FOUND_ROWS ".str_replace(" , ", " ", implode(", ", $aColumnsToSelect))."
 		FROM   $sTable
 		$sJoin 
 		$sWhere
@@ -180,7 +182,7 @@ require_once('webroot.php');
 	
 	//echo $sQuery."<br/><br/>";
 	
-	$rResult = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
+	$rResult = query($sQuery, $gaSql) or die(mysql_error());
 	
 
 	
@@ -190,7 +192,7 @@ require_once('webroot.php');
 	$sQuery = "
 		SELECT FOUND_ROWS()
 	";
-	$rResultFilterTotal = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
+	$rResultFilterTotal = query($sQuery, $gaSql) or die(mysql_error());
 	$aResultFilterTotal = mysqli_fetch_array($rResultFilterTotal);
 	$iFilteredTotal = $aResultFilterTotal[0];
 	
@@ -199,7 +201,7 @@ require_once('webroot.php');
 		SELECT COUNT(".$sIndexColumn.")
 		FROM   $sTable
 	";
-	$rResultTotal = query($sQuery, $gaSql) or die(mysqli_error($gaSql['link']));
+	$rResultTotal = query($sQuery, $gaSql) or die(mysql_error());
 	$aResultTotal = mysqli_fetch_array($rResultTotal);
 	$iTotal = $aResultTotal[0];
 	
@@ -231,21 +233,28 @@ require_once('webroot.php');
 			}
 		}
 		
-			foreach($row AS $r => $a)
-			{				
-				if($r == 0)
-				{	
-				$row[1] = '<a onClick="generateReport('.$row[1].', \'s26\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-				class="fas fa-download fa-sm text-white-50"></i> Generate S-26</a>';
-
-				$row[2] = '<a onClick="generateReport('.$row[2].', \'to62\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-				class="fas fa-download fa-sm text-white-50"></i> Generate TO-62</a>';
-
-				$row[3] = '<a onClick="generateReport('.$row[3].', \'s30\')" class=" d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-				class="fas fa-download fa-sm text-white-50"></i> Generate S-30</a>';
+			foreach($row AS $r => $a){
+				if($r == '0'){
+				 
+				if($campaignListID == $row[1])
+				{					
+					$hiddenClass = "hidden";
 				}
+				else
+				{
+					$hiddenClass = "";
+				}
+
+				$row[0] = '<div class="p-2">
+						   <div class="float-left">'.$row[0].'</div>'
+						   .'<div class="float-right"><button type="button" class="btn btn-success btn-sm" 
+						   	 id="btnvw'.$row[1].'" onclick="viewLeaderBoard('.$row[1].',\''.$row[0].'\');" 
+							 '.$hiddenClass.'>view </button>
+						   </div></div>';
+				}
+				
 							
-			}
+		}
 		$output['aaData'][] = $row;
 		
 	}
